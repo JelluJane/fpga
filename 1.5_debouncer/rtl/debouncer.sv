@@ -13,9 +13,6 @@ logic                      busy;
 localparam                 GLITCH = (GLITCH_TIME_NS * CLK_FREQ_MHZ / 1000 );
     
 
-
-
-//счётчик
 always_ff @( posedge clk_i )
 begin
 if ( ~busy )

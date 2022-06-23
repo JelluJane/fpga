@@ -18,7 +18,7 @@ begin
 data_right_w = '0;                                                          
 data_left_w  = '0;  
 if ( data_val_i )                                                        
-  for(int i = 0; i < WIDTH; i++)                                              
+  for( int i = 0; i < WIDTH; i++ )                                              
     begin                                                                   
   	  if (data_i[i] == 1)                                                  
         begin                                                           

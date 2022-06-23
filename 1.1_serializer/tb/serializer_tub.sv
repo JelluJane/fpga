@@ -9,6 +9,7 @@ logic        busy;
 
 bit          rst_done;
 bit          clk;
+int          i;
 
 initial
   begin
@@ -47,33 +48,67 @@ initial
 
 initial
   begin
-    wait(rst_done)
-    $monitor("Value of output is: %d Value of output valid %d", ser_data, ser_data_val);
+    wait ( rst_done );
     ##1;
-    data = '1;
+	i        = 0;
+    data     = 16'b1101101010101100;
     data_val = 1'b1;
     data_mod = 0;
-    ##1;
+    wait ( ser_data_val );
     data_val = 1'b0;
-    ##17;
-    data = 16'b1000100010001000;
-    data_mod = 14;
-    data_val = 1'b1;
+	#1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
     ##1;
-    data_val = 1'b0;
-    ##14;
-    data = 16'b1010101010101010;
-    data_mod = 2;
-    data_val = 1'b1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
     ##1;
-    data_val = 1'b0;
-    ##2;
-    data_val = 1'b1;
-    data = 16'b1011100010101010;
-    data_mod = 12;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
     ##1;
-    data_val = 1'b0;
-    ##12;
-    srst = 1'b1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b0) else begin $error("failed"); i++; end
+	wait ( ~busy );
+    data_val   = 1'b1;
+    data       = '1;
+    data_mod   = 4'd5;
+	wait ( ser_data_val );
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##1;
+    assert (ser_data === 1'b1) else begin $error("failed"); i++; end
+    ##2;    
+    assert (busy === 1'b0) else begin $error("failed"); i++; end
+    if ( i )
+	  $display (" simulation finishing with %d errors ", i);
+    else
+      $display (" simulation finishing without errors ");
+    ##1;
+    $finish;
   end
 endmodule
