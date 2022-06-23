@@ -34,7 +34,7 @@ debouncer #(
 
 initial
   begin
-	##1;
+    ##1;
     key = 1'b0;
     ##5;
     key = 1'b1;
@@ -44,9 +44,9 @@ initial
     key = 1'b1;
     ##35;
     key = 1'b0;
-	##1;
-	key = 1'b1;
-	##30;
-	key = 1'b0;
+    ##1;
+    key = 1'b1;
+    ##30;
+    key = 1'b0;
   end
 endmodule

@@ -22,7 +22,7 @@ begin
                         busy_o = 1'b0;
   else
     if (count == 1'b0 ) busy_o = 1'b0;
-	else                busy_o = 1'b1;
+    else                busy_o = 1'b1;
 end
 
 always_ff @ (posedge clk_i)
@@ -31,8 +31,8 @@ begin
     ser_long <= 5'd0;
   else
     if ( ( data_val_i ) & ( count == 5'd0 ) & ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) )
-	  if ( data_mod_i )   ser_long            <= data_mod_i;
-      else                ser_long        	  <= 5'd16;
+      if ( data_mod_i )   ser_long            <= data_mod_i;
+      else                ser_long              <= 5'd16;
 end
 
 always_ff @ ( posedge clk_i )
@@ -41,7 +41,7 @@ begin
     work_data <= 16'd0;
   else
     if ( ( data_val_i ) & ( count == 5'd0 ) & ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) )
-	  work_data <= data_i;
+      work_data <= data_i;
 end
 
 always_ff @ (posedge clk_i) //я помню про одно присваивание на always_ff блок, но тут у двух переменных абсолютно одинаковые условия изменения. Зачем загромождать код в такой ситуации?
@@ -56,7 +56,7 @@ begin
       if ( ( data_val_i ) & ( count == 5'd0 ) & ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) )
         begin
           ser_data_o         <= data_i[15]; 
-		  count              <= 5'd1;
+          count              <= 5'd1;
         end
       else
         begin
@@ -66,7 +66,7 @@ begin
               count                    <= 5'd0;
             end
           else
-		    begin
+            begin
               ser_data_o               <= work_data[15-count];
               count                    <= count + 1;            
             end

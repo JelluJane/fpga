@@ -50,13 +50,13 @@ initial
   begin
     wait ( rst_done );
     ##1;
-	i        = 0;
+    i        = 0;
     data     = 16'b1101101010101100;
     data_val = 1'b1;
     data_mod = 0;
     wait ( ser_data_val );
     data_val = 1'b0;
-	#1;
+    #1;
     assert (ser_data === 1'b1) else begin $error("failed"); i++; end
     ##1;
     assert (ser_data === 1'b1) else begin $error("failed"); i++; end
@@ -88,11 +88,11 @@ initial
     assert (ser_data === 1'b0) else begin $error("failed"); i++; end
     ##1;
     assert (ser_data === 1'b0) else begin $error("failed"); i++; end
-	wait ( ~busy );
+    wait ( ~busy );
     data_val   = 1'b1;
     data       = '1;
     data_mod   = 4'd5;
-	wait ( ser_data_val );
+    wait ( ser_data_val );
     assert (ser_data === 1'b1) else begin $error("failed"); i++; end
     ##1;
     assert (ser_data === 1'b1) else begin $error("failed"); i++; end
@@ -105,7 +105,7 @@ initial
     ##2;    
     assert (busy === 1'b0) else begin $error("failed"); i++; end
     if ( i )
-	  $display (" simulation finishing with %d errors ", i);
+      $display (" simulation finishing with %d errors ", i);
     else
       $display (" simulation finishing without errors ");
     ##1;

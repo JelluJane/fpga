@@ -49,14 +49,14 @@ initial
   begin
     wait(rst_done);
     ##1;
-	i = 0;
+    i = 0;
     data_val = 1'b1;
     data = 14; 
     
-	
-	
-	if ( i )
-	  $display (" simulation finishing with %d errors ", i);
+    
+    
+    if ( i )
+      $display (" simulation finishing with %d errors ", i);
     else
       $display (" simulation finishing without errors ");
     ##1;

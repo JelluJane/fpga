@@ -42,32 +42,32 @@ initial
     rst_done = 1'b1;
     $display( "RESET DONE" );
     end
-	
+    
 initial
     begin
     wait ( rst_done );
     ##1;
-	i        = 0;
+    i        = 0;
     data_val = 1'b1;
     data     = 1'b1;
     wait ( deser_data_val );
     #1;
-	assert (deser_data === 16'b1111111111111111) else begin $error("failed"); i++; end
-	data     = 0;
-	##4;
-	data_val = 1'b0;
-	data     = 1;
-	##4;
-	data_val = 1'b1;
-	data     = 0;
-	wait ( deser_data_val );
-	assert (deser_data === 16'b0000000000000000) else begin $error("failed"); i++; end
-	##1;
-	if ( i )
-	  $display (" simulation finishing with %d errors ", i);
+    assert (deser_data === 16'b1111111111111111) else begin $error("failed"); i++; end
+    data     = 0;
+    ##4;
+    data_val = 1'b0;
+    data     = 1;
+    ##4;
+    data_val = 1'b1;
+    data     = 0;
+    wait ( deser_data_val );
+    assert (deser_data === 16'b0000000000000000) else begin $error("failed"); i++; end
+    ##1;
+    if ( i )
+      $display (" simulation finishing with %d errors ", i);
     else
       $display (" simulation finishing without errors ");
     ##1;
     $finish;
-	end
+    end
 endmodule

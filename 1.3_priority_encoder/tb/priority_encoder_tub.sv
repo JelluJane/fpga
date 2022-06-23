@@ -52,25 +52,25 @@ initial
   begin
     wait ( rst_done );
     ##1;
-	i        = 0;
+    i        = 0;
     data     = 8'b01001000;  
     data_val = 1'b1;
     ##1
-	assert (data_left      === 8'b01000000) else begin $error("failed"); i++; end
-	assert (data_right     === 8'b00001000) else begin $error("failed"); i++; end
-	assert (deser_data_val === 1'b1       ) else begin $error("failed"); i++; end
+    assert (data_left      === 8'b01000000) else begin $error("failed"); i++; end
+    assert (data_right     === 8'b00001000) else begin $error("failed"); i++; end
+    assert (deser_data_val === 1'b1       ) else begin $error("failed"); i++; end
     data     = 8'b11001001;
-	##1
-	assert (data_left      === 8'b10000000) else begin $error("failed"); i++; end
-	assert (data_right     === 8'b00000001) else begin $error("failed"); i++; end
-	assert (deser_data_val === 1'b1       ) else begin $error("failed"); i++; end
-	##1;
-	data     = 8'b00111100; 
-	data_val = 1'b0;
-	##1;
-	assert (deser_data_val === 1'b0       ) else begin $error("failed"); i++; end
-	if ( i )
-	  $display (" simulation finishing with %d errors ", i);
+    ##1
+    assert (data_left      === 8'b10000000) else begin $error("failed"); i++; end
+    assert (data_right     === 8'b00000001) else begin $error("failed"); i++; end
+    assert (deser_data_val === 1'b1       ) else begin $error("failed"); i++; end
+    ##1;
+    data     = 8'b00111100; 
+    data_val = 1'b0;
+    ##1;
+    assert (deser_data_val === 1'b0       ) else begin $error("failed"); i++; end
+    if ( i )
+      $display (" simulation finishing with %d errors ", i);
     else
       $display (" simulation finishing without errors ");
     ##1;

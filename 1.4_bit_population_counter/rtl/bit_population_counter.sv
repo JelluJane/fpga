@@ -8,7 +8,7 @@ input  logic [WIDTH-1:0]       data_i,
 input  logic                   data_val_i,
 
 output logic [$clog2(WIDTH):0] data_o,
-output logic                   data_val_o
+output logic                   data_val_o    
 );
 logic        [WIDTH-1:0]       work_data;
 
@@ -20,7 +20,7 @@ always_comb
         begin
           if ( data_i[i] )
             work_data = work_data + 1;
-	    end
+        end
   end
   
 always_ff @ ( posedge clk_i )

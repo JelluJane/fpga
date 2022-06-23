@@ -20,7 +20,7 @@ data_left_w  = '0;
 if ( data_val_i )                                                        
   for( int i = 0; i < WIDTH; i++ )                                              
     begin                                                                   
-  	  if (data_i[i] == 1)                                                  
+        if (data_i[i] == 1)                                                  
         begin                                                           
           data_right_w[i] = 1'b1;                                         
           break;                                          
