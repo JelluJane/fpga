@@ -70,9 +70,9 @@ initial
     ##1;
     assert (deser_data_val === 1'b0       ) else begin $error("failed"); i++; end
     if ( i )
-      $display (" simulation finishing with %d errors ", i);
+      $display (" the simulation is finished with  %d errors ", i);
     else
-      $display (" simulation finishing without errors ");
+      $display (" the simulation is finished without  errors ");
     ##1;
     $finish;
   end
