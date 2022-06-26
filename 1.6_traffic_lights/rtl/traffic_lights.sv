@@ -29,15 +29,13 @@ assign blink_time       = 16'd2;
 
 
 
-enum logic [2:0] {
-RED,
-RED_YEL,
-GREEN,
-GREEN_BLINK,
-YELLOW,
-YELLOW_BLINK,
-WAITING_MOD
-} state, next_state;
+enum logic [2:0] {RED,
+                  RED_YEL,
+                  GREEN,
+                  GREEN_BLINK,
+                  YELLOW,
+                  YELLOW_BLINK,
+                  WAITING_MOD } state, next_state;
 
 
 // сначала конечный автомат.

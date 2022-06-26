@@ -14,14 +14,14 @@ localparam                 GLITCH = (GLITCH_TIME_NS * CLK_FREQ_MHZ / 1000 );
     
 
 always_ff @( posedge clk_i )
-begin
-if ( ~busy )
-    if ( count == GLITCH )
-        begin
-        count             <= '0;
-        key_pressed_stb_o <= 1'b1;
-        busy              <= 1'b1;
-        end
+  begin
+    if ( ~busy )
+      if ( count == GLITCH )
+          begin
+            count             <= '0;
+            key_pressed_stb_o <= 1'b1;
+            busy              <= 1'b1;
+          end
     else
         if ( key_i )
             count         <= count+1;

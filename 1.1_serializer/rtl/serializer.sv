@@ -7,71 +7,72 @@ input logic        data_val_i,
 
 output logic       ser_data_o,
 output logic       ser_data_val_o,
-output logic       busy_o
+output logic       busy_o = 1'b0
 );
 
 logic       [15:0] work_data;
-logic       [4:0]  ser_long;  
-logic       [4:0]  count;       
+logic       [3:0]  ser_long;  
+logic       [3:0]  count;    
+logic              start;
 
-assign ser_data_val_o = busy_o;     
+assign start          = ( (     data_val_i     ) & (   count == 4'd15    ) & 
+                          ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) );
+assign ser_data_val_o = ( ( count != 4'd15 ) || start ) ? 1'b1: 1'b0;     
 
+always_ff @(posedge clk_i)
+  begin
+    if ( srst_i )
+      busy_o <= 1'b0;
+    else
+      if ( start ) 
+        busy_o <= 1'b1;
+      else
+	    if ( count == ( 15 - ser_long ) )
+          busy_o <= 1'b0;
+  end
+  
 always_comb
-begin
-  if ( srst_i )
-                        busy_o = 1'b0;
-  else
-    if (count == 1'b0 ) busy_o = 1'b0;
-    else                busy_o = 1'b1;
-end
-
+  begin  
+    if ( start )
+      ser_data_o = data_i[15]; 
+    else
+      if ( busy_o )
+        ser_data_o = work_data[count];
+  end
+ 
 always_ff @ (posedge clk_i)
-begin
-  if ( srst_i )
-    ser_long <= 5'd0;
-  else
-    if ( ( data_val_i ) & ( count == 5'd0 ) & ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) )
-      if ( data_mod_i )   ser_long            <= data_mod_i;
-      else                ser_long              <= 5'd16;
-end
+  begin
+    if ( srst_i )
+      ser_long <= 4'd0;
+    else
+      if ( start )
+        if ( data_mod_i > 2 )   
+          ser_long              <= data_mod_i - 1;
+        else        
+          ser_long              <= 4'd15;
+  end
 
 always_ff @ ( posedge clk_i )
-begin
-  if ( srst_i )
-    work_data <= 16'd0;
-  else
-    if ( ( data_val_i ) & ( count == 5'd0 ) & ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) )
-      work_data <= data_i;
-end
+  begin
+    if ( srst_i )
+      work_data   <= 16'd0;
+    else
+      if ( start )
+        work_data <= data_i;
+  end
 
-always_ff @ (posedge clk_i) //я помню про одно присваивание на always_ff блок, но тут у двух переменных абсолютно одинаковые условия изменения. Зачем загромождать код в такой ситуации?
-begin
-  if (srst_i)
-    begin
-      ser_data_o             <= 1'b0;
-      count                  <= 5'd0;
-    end
-  else
-    begin
-      if ( ( data_val_i ) & ( count == 5'd0 ) & ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) )
-        begin
-          ser_data_o         <= data_i[15]; 
-          count              <= 5'd1;
-        end
+always_ff @ ( posedge clk_i ) 
+  begin
+    if ( srst_i )
+        count <= 4'd15;
+    else
+      if ( start )
+        count <= count - 1;
       else
-        begin
-          if (count == ser_long)
-            begin
-              ser_data_o               <= work_data[15-count];
-              count                    <= 5'd0;
-            end
-          else
-            begin
-              ser_data_o               <= work_data[15-count];
-              count                    <= count + 1;            
-            end
-        end
-    end
-end
-   
+        if ( count == ( 15 - ser_long ) )
+          count <= 4'd15;           
+        else
+		  count <= count - 1; 
+  end
+  
 endmodule
