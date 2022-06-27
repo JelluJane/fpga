@@ -51,25 +51,22 @@ task create_trans();
   tmp_data = $urandom();
   tmp_mod  = $urandom_range( 1,16 );
 
-  if( mod > 2 )
-    for( int i = 0; i < mod; i++ )
-      ref_bit_queue.put( data[15-i] );
-  // do while позволяет отправить данные только
-  // когда busy в 0
   do  
     ##1;
   while( busy );
-  data       <= tmp_data;
-  data_mod_i <= tmp_mod[3:0];
-  data_val_i <= 1'b1;
-  ##1;
-  data_val_i <= 1'b0;
-  data_i     <= 'x;
+  if ( $urandom_range(10) > 2 )
+    data_val = 1'b1;
+  else
+    data_val = 1'b0;
+  data       = tmp_data;
+  data_mod   = tmp_mod[3:0];
+  if( ( mod > 2 ) && data_val )
+    for( int i = 0; i < mod; i++ )
+      ref_bit_queue.put( data[15-i] );
+  ##1;  
+  data_val = 1'b0;
+  data     = 'x;  
 endtask
-Т.е. таск выше отправляет транзакцию и сразу пишет только валидные биты,
-которые должны появится на выходе тестируемого модуля.
-
-Теперь нужно собирать для проверки валидные биты с выхода тестируемого модуля:
 
 task accumd();
   forever
@@ -79,24 +76,27 @@ task accumd();
       ##1;
     end
 endtask
-Таск проверки будет:
 
-Он может крутится всега по аналогиии с accumd.
-Проверяет он, когда две очереди/mailbox не пусты.
-Реализуете его самостоятельно.
-
-Итого intial будет выглядить следующим образом:
+//Таск проверки будет:
+//
+//Он может крутится всега по аналогиии с accumd.
+//Проверяет он, когда две очереди/mailbox не пусты.
 
 initial
   begin
-     // ресет и прочие проготовления
-     fork
-      accumd();
-      //Ваш task для проверки
-      // Эти таски в бесконечном цикле крутятся,
-      // поэтому не ждем когда они закончатся
-     join_none
-     repeat (TEST_LEN) create_trans();
-     // Ждем когда последние данные точно выйдут
-     // и проверяем, что очереди/mailbox пустые
+    srst = 1'b0;
+    ##1;
+    srst = 1'b1;
+    ##1;
+    srst = 1'b0;
+    ##1;
+    fork
+    accumd();
+    //Ваш task для проверки
+    // Эти таски в бесконечном цикле крутятся,
+    // поэтому не ждем когда они закончатся
+    join_none
+    repeat (TEST_LEN) create_trans();
+    ##16;
+	
   end
