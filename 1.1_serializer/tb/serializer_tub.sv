@@ -63,14 +63,14 @@ task automatic get_res ( input  logic [3:0]  res_mod,
     begin
       res[cnt] = ser_data;
       cnt = cnt - 1;
-	  ##1;
+      ##1;
     end
   else
     repeat( res_mod )
       begin
         res[cnt] = ser_data;
         cnt = cnt - 1;
-		##1;
+        ##1;
       end
 endtask
 
@@ -104,16 +104,16 @@ initial
       begin
         forever
           begin
-		    if ( ( busy === 1'd0 ) && ( ser_data_val === 1'd1 ) ) 
-			  begin
-			    results_mod.push_back( data_mod );
+            if ( ( busy === 1'd0 ) && ( ser_data_val === 1'd1 ) ) 
+              begin
+                results_mod.push_back( data_mod );
                 get_res ( data_mod, res_tmp );
                 results.push_back( res_tmp );
-				if ( i == TEST_LEN )
-				  break;
+                if ( i == TEST_LEN )
+                  break;
               end
-			else 
-			  @( posedge clk ); 
+            else 
+              @( posedge clk ); 
           end
       end
     join
