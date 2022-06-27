@@ -9,7 +9,7 @@ logic        busy;
 
 parameter    TEST_LEN = 1000;
 
-int          i=0;
+int          i = 0;
 bit          clk;
 
 logic [15:0] res_tmp;
@@ -44,85 +44,59 @@ serializer dut  (
 .busy_o         (busy            )
 );
 
-task send_data_task ( input logic [15:0] data_in, 
-                      input logic [3:0]  mod );
-  data = data_in;
-  if ( $urandom_range(10) > 2 )
-    data_val = 1'b1;
-  data_mod = mod;
-  @(posedge clk);
-  data_val = 1'b0;
-endtask
+task create_trans();
+  logic [15:0] tmp_data;
+  logic [4:0]  tmp_mod;
 
-task automatic get_res ( input  logic [3:0]  res_mod,
-                         output logic [15:0] res );
-  int cnt = 4'd15;
-  res = '0;
-  if ( res_mod == 4'b0000 )
-    repeat( 16 )
+  tmp_data = $urandom();
+  tmp_mod  = $urandom_range( 1,16 );
+
+  if( mod > 2 )
+    for( int i = 0; i < mod; i++ )
+      ref_bit_queue.put( data[15-i] );
+  // do while позволяет отправить данные только
+  // когда busy в 0
+  do  
+    ##1;
+  while( busy );
+  data       <= tmp_data;
+  data_mod_i <= tmp_mod[3:0];
+  data_val_i <= 1'b1;
+  ##1;
+  data_val_i <= 1'b0;
+  data_i     <= 'x;
+endtask
+Т.е. таск выше отправляет транзакцию и сразу пишет только валидные биты,
+которые должны появится на выходе тестируемого модуля.
+
+Теперь нужно собирать для проверки валидные биты с выхода тестируемого модуля:
+
+task accumd();
+  forever
     begin
-      res[cnt] = ser_data;
-      cnt = cnt - 1;
+      if( ser_data_val === 1'b1 )
+        bit_queue.put( ser_data );
       ##1;
     end
-  else
-    repeat( res_mod )
-      begin
-        res[cnt] = ser_data;
-        cnt = cnt - 1;
-        ##1;
-      end
 endtask
+Таск проверки будет:
+
+Он может крутится всега по аналогиии с accumd.
+Проверяет он, когда две очереди/mailbox не пусты.
+Реализуете его самостоятельно.
+
+Итого intial будет выглядить следующим образом:
 
 initial
   begin
-    srst = 1'b0;
-    @( posedge clk );
-    srst = 1'b1;
-    @( posedge clk );
-    srst = 1'b0;
-    ##1;
-    $display( "RESET DONE" );
-    ##1;
-    for ( i=0; i < TEST_LEN; i++ )
-      begin
-        send_data.push_back( $random() );
-        send_data_mod.push_back( $random() );
-      end
-    fork
-      begin
-        for ( i=0; i < TEST_LEN; i++ )
-          begin
-            send_data_task( send_data[i], send_data_mod[i] );
-            if ( data_val )
-              realy_send.push_back( send_data[i] );
-            else
-              @( posedge clk );
-            wait ( ~busy ) ;
-          end
-      end      
-      begin
-        forever
-          begin
-            if ( ( busy === 1'd0 ) && ( ser_data_val === 1'd1 ) ) 
-              begin
-                results_mod.push_back( data_mod );
-                get_res ( data_mod, res_tmp );
-                results.push_back( res_tmp );
-                if ( i == TEST_LEN )
-                  break;
-              end
-            else 
-              @( posedge clk ); 
-          end
-      end
-    join
-    ##16;
-    for ( i=0; i< TEST_LEN; i++ )
-      if ( ( send_data_mod[i] != 1 ) && ( send_data_mod[i] != 2 ) )
-        if( realy_send[i] != results[i] )
-          $error( "ERROR" );
-    $finish;
+     // ресет и прочие проготовления
+     fork
+      accumd();
+      //Ваш task для проверки
+      // Эти таски в бесконечном цикле крутятся,
+      // поэтому не ждем когда они закончатся
+     join_none
+     repeat (TEST_LEN) create_trans();
+     // Ждем когда последние данные точно выйдут
+     // и проверяем, что очереди/mailbox пустые
   end
-
-endmodule

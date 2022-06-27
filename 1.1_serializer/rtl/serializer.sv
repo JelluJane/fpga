@@ -17,7 +17,7 @@ logic              start;
 
 assign start          = ( (     data_val_i     ) & (   count == 4'd15    ) & 
                           ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) );
-assign ser_data_val_o = ( ( count != 4'd15 ) || start ) ? 1'b1: 1'b0;     
+assign ser_data_val_o = ( ( count != 4'd15 ) || start ) ? 1'b1 : 1'b0;     
 
 always_ff @(posedge clk_i)
   begin
