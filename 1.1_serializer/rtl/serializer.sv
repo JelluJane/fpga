@@ -46,10 +46,10 @@ always_ff @ (posedge clk_i)
       ser_long <= 4'd0;
     else
       if ( start )
-        if ( data_mod_i > 2 )   
-          ser_long              <= data_mod_i - 1;
+        if ( data_mod_i == 0 )   
+          ser_long <= 4'd15;
         else        
-          ser_long              <= 4'd15;
+          ser_long <= data_mod_i - 1;
   end
 
 always_ff @ ( posedge clk_i )
@@ -72,7 +72,8 @@ always_ff @ ( posedge clk_i )
         if ( count == ( 15 - ser_long ) )
           count <= 4'd15;           
         else
-		  count <= count - 1; 
+		  if ( busy_o )
+		    count <= count - 1; 
   end
   
 endmodule
