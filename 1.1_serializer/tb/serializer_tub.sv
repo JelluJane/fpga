@@ -54,22 +54,24 @@ task send_data_task ( input logic [15:0] data_in,
   data_val = 1'b0;
 endtask
 
-task automatic get_res ( output logic [15:0] res,
-                         output logic [3:0]  res_mod );
-  int cnt;
-  if ( data_mod == 4'b0000 )
-    cnt = 15;
-  else
-    cnt = data - 1;
+task automatic get_res ( input  logic [3:0]  res_mod,
+                         output logic [15:0] res );
+  int cnt = 4'd15;
   res = '0;
-  repeat( cnt )
+  if ( res_mod == 4'b0000 )
+    repeat( 16 )
     begin
-      wait ( ser_data_val );
-      @( posedge clk );
       res[cnt] = ser_data;
       cnt = cnt - 1;
+	  ##1;
     end
-  res_mod = data_mod;
+  else
+    repeat( res_mod )
+      begin
+        res[cnt] = ser_data;
+        cnt = cnt - 1;
+		##1;
+      end
 endtask
 
 initial
@@ -80,40 +82,47 @@ initial
     @( posedge clk );
     srst = 1'b0;
     ##1;
-	$display( "RESET DONE" );
-	##1;
+    $display( "RESET DONE" );
+    ##1;
     for ( i=0; i < TEST_LEN; i++ )
       begin
         send_data.push_back( $random() );
-	    send_data_mod.push_back( $random() );
+        send_data_mod.push_back( $random() );
       end
-	fork
+    fork
       begin
         for ( i=0; i < TEST_LEN; i++ )
           begin
-	        send_data_task( send_data[i], send_data_mod[i] );
-		    if ( data_val )
+            send_data_task( send_data[i], send_data_mod[i] );
+            if ( data_val )
               realy_send.push_back( send_data[i] );
             else
               @( posedge clk );
             wait ( ~busy ) ;
           end
-      end	  
-	  begin
-	    forever
+      end      
+      begin
+        forever
           begin
-            get_res ( res_tmp, mod_tmp );
-            results.push_back( res_tmp );
-            results_mod.push_back( mod_tmp );
+		    if ( ( busy === 1'd0 ) && ( ser_data_val === 1'd1 ) ) 
+			  begin
+			    results_mod.push_back( data_mod );
+                get_res ( data_mod, res_tmp );
+                results.push_back( res_tmp );
+				if ( i == TEST_LEN )
+				  break;
+              end
+			else 
+			  @( posedge clk ); 
           end
-	  end
-	join_any
-	##16;
+      end
+    join
+    ##16;
     for ( i=0; i< TEST_LEN; i++ )
       if ( ( send_data_mod[i] != 1 ) && ( send_data_mod[i] != 2 ) )
         if( realy_send[i] != results[i] )
           $error( "ERROR" );
-	$finish;
+    $finish;
   end
 
 endmodule
