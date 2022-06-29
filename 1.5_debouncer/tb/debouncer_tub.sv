@@ -47,16 +47,13 @@ task send ();
 endtask
 
 task check ();
+  logic tmp;
   forever
     begin
-	  
-       if ( ( count == ( GLITCH + 2 ) ) && ( ~key_pressed_stb ) )
-	   begin
-	        $error("error");
-			##1;
-			end
-	   else
-	    ##1;
+	  ##1;
+	  tmp = key_pressed_stb;
+      if ( ( count == ( GLITCH + 2 ) ) & ( tmp = 1'b0 ) )
+	    $error("error");
     end
 endtask
 
