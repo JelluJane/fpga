@@ -1,5 +1,5 @@
 module testbench_debouncer #(
-parameter    CLK_FREQ_MHZ = 150,
+parameter    CLK_FREQ_MHZ = 100,
 parameter    GLITCH_TIME_NS = 100)
 ();
 logic        key;
@@ -52,7 +52,7 @@ task check ();
     begin
 	  ##1;
 	  tmp = key_pressed_stb;
-      if ( ( count == ( GLITCH + 2 ) ) & ( tmp = 1'b0 ) )
+      if ( ( count == ( GLITCH + 2 ) ) & ( tmp = 1'b0 ) ) //единица на счёт с нуля и ещё одна на работу регистра.
 	    $error("error");
     end
 endtask

@@ -15,7 +15,8 @@ logic       [16:0]   red_time; /*в тактах нужно будет удва�
 logic       [16:0]   yellow_time;
 logic       [16:0]   green_time;
 logic       [15:0]   count;
-logic       [15:0]   blink_count;
+logic       [15:0]   g_blink_count;
+logic       [15:0]   y_blink_count;
 logic       [15:0]   blink_time;   
 logic       [15:0]   red_yel_time;
 logic       [15:0]   green_blink_time;
@@ -23,9 +24,9 @@ logic       [15:0]   green_blink_time;
 //тут меняем интервал мигания для мигающих состояний и длительность непрограммируемых состояний.
 //1 мс = 2 такта
 
-assign red_yel_time     = 16'd6;
-assign green_blink_time = 16'd6;
-assign blink_time       = 16'd2;
+assign red_yel_time     = 16'd100;
+assign green_blink_time = 16'd100;
+assign blink_time       = 16'd10;
 
 
 
@@ -180,9 +181,11 @@ always_ff @( posedge clk_i )
 begin
   if ( srst_i )
     begin
-      blink_count <= 1'd0;
-      count       <= 16'd0;
-    end
+      g_blink_count <= 16'd0;
+	  y_blink_count <= 16'd0;
+      count         <= 16'd0;
+	  blink_on      <= 1'b0;
+	end
   else
     case ( state )
       RED:
@@ -205,17 +208,18 @@ begin
         if ( count       == green_blink_time )
           begin
             count        <= 16'd0;
-            blink_count  <= 16'd0;
+            g_blink_count<= 16'd0;
+			blink_on     <= 1'b0;
           end
         else
           count          <= count + 1;
-        if ( blink_count == blink_time )
+        if ( g_blink_count == blink_time )
           begin
             blink_on     <= ~ blink_on;  
-            blink_count  <= 1'd0;
+            g_blink_count<= 1'd0;
           end
         else
-          blink_count    <= blink_count + 1;  
+          g_blink_count  <= g_blink_count + 1;  
         end
       YELLOW:
         if (count        == yellow_time)
@@ -223,13 +227,13 @@ begin
         else
           count          <= count + 1;
       YELLOW_BLINK:
-        if ( blink_count == blink_time )
+        if ( y_blink_count == blink_time )
           begin
             blink_on     <= ~ blink_on;  
-            blink_count  <= 16'd0;
+            y_blink_count<= 16'd0;
           end
         else
-          blink_count    <= blink_count + 1;
+          y_blink_count  <= y_blink_count + 1;
       WAITING_MOD:
         ;
       default:

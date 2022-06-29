@@ -75,5 +75,6 @@ initial
     ##1;
     cmd_valid = 1'b0; //отпускаем работать
     ##1000;
+	
   end
 endmodule
