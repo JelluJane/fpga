@@ -6,13 +6,8 @@ logic                  data_val;
 logic    [WIDTH-1:0]   data_left;
 logic    [WIDTH-1:0]   data_right;
 logic                  deser_data_val;
-logic    [WIDTH-1:0]   tmp_data;
-logic    [WIDTH-1:0]   tmp_left;
-logic    [WIDTH-1:0]   tmp_right;
-logic    [WIDTH-1:0]   r_res;
-logic    [WIDTH-1:0]   r_test;
-logic    [WIDTH-1:0]   l_res;
-logic    [WIDTH-1:0]   l_test;
+
+
 
 parameter              TEST_LEN = 1000;
 
@@ -51,6 +46,9 @@ priority_encoder #(
 
 
 task create_trans();
+  logic    [WIDTH-1:0]   tmp_data;
+  logic    [WIDTH-1:0]   tmp_left;
+  logic    [WIDTH-1:0]   tmp_right;
   tmp_data  = $urandom();
   tmp_left  = '0;
   tmp_right = '0;
@@ -99,6 +97,10 @@ task accumd();
 endtask
 
 task check();
+  logic    [WIDTH-1:0]   r_res;
+  logic    [WIDTH-1:0]   r_test;
+  logic    [WIDTH-1:0]   l_res;
+  logic    [WIDTH-1:0]   l_test;
   forever
     begin
       r_ref_result.get ( r_test );

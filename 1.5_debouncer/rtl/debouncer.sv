@@ -1,14 +1,14 @@
 module debouncer #(
-parameter CLK_FREQ_MHZ   = 100,
-parameter GLITCH_TIME_NS = 100
+parameter                  CLK_FREQ_MHZ   = 100,
+parameter                  GLITCH_TIME_NS = 100
 ) (
-input  logic key_i,
-input  logic clk_i,
+input  logic               key_i,
+input  logic               clk_i,
 
-output logic key_pressed_stb_o
+output logic               key_pressed_stb_o =1'b0
 );
-logic [$clog2(GLITCH)+1:0] count;
-logic                      busy;
+logic [$clog2(GLITCH)+1:0] count  ='0;
+logic                      busy   =1'b0;
  
 localparam                 GLITCH = (GLITCH_TIME_NS * CLK_FREQ_MHZ / 1000 );
     
@@ -36,5 +36,3 @@ if ( ~key_i )
 end
 
 endmodule
-
-

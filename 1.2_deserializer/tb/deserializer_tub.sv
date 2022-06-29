@@ -3,10 +3,7 @@ logic            data;
 logic            data_val;
 logic [15:0]     deser_data;
 logic            deser_data_val;
-logic            tmp_data;
-logic [15:0]     res;
-logic [15:0]     test;
-logic            tmp;
+
 
 
 parameter        TEST_LEN = 1000;
@@ -40,6 +37,7 @@ deserializer dut     (
 );
 
 task create_trans();
+  logic            tmp_data;
   tmp_data = $urandom();
   
   if ( $urandom_range(10) > 2 )
@@ -62,6 +60,9 @@ task accumd();
 endtask
 
 task check();
+  logic            tmp;
+  logic [15:0]     res;
+  logic [15:0]     test;
   forever
     begin
       for ( int i = 0; i < 16; i++ )

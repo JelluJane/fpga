@@ -1,12 +1,15 @@
 module testbench_debouncer #(
-parameter CLK_FREQ_MHZ = 150,
-parameter GLITCH_TIME_NS = 100)
+parameter    CLK_FREQ_MHZ = 150,
+parameter    GLITCH_TIME_NS = 100)
 ();
-logic key;
-logic key_pressed_stb;
+logic        key;
+logic        key_pressed_stb;
 
-bit clk;
+bit          clk;
+int          count;
 
+parameter    TEST_LEN = 1000;
+localparam   GLITCH = (GLITCH_TIME_NS * CLK_FREQ_MHZ / 1000 );
 
 initial
   begin
@@ -31,22 +34,41 @@ debouncer #(
 .key_pressed_stb_o    (key_pressed_stb    )
 );
 
+task send ();
+  if ( $urandom_range(100) > 3 )
+    key = 1'b1;
+  else
+    key = 1'b0;
+  if (key)
+    count += 1;
+  else
+    count = 0;
+  ##1;
+endtask
+
+task check ();
+  forever
+    begin
+	  
+       if ( ( count == ( GLITCH + 2 ) ) && ( ~key_pressed_stb ) )
+	   begin
+	        $error("error");
+			##1;
+			end
+	   else
+	    ##1;
+    end
+endtask
 
 initial
   begin
     ##1;
-    key = 1'b0;
-    ##5;
-    key = 1'b1;
-    ##10;
-    key = 1'b0;
-    ##1;
-    key = 1'b1;
-    ##35;
-    key = 1'b0;
-    ##1;
-    key = 1'b1;
-    ##30;
-    key = 1'b0;
+	fork
+	  check();
+	  repeat ( TEST_LEN ) send();
+	join_any
+	##1;
+    $finish;
+	
   end
 endmodule

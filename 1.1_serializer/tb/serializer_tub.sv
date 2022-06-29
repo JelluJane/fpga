@@ -5,10 +5,6 @@ logic        data_val;
 logic        ser_data;
 logic        ser_data_val;
 logic        busy;
-logic [15:0] tmp_data;
-logic [4:0]  tmp_mod;
-logic        res;
-logic        test;
 
 parameter    TEST_LEN = 1000;
 
@@ -45,6 +41,8 @@ serializer dut  (
 );
 
 task create_trans();
+  logic [15:0] tmp_data;
+  logic [4:0]  tmp_mod;
   tmp_data = $urandom();
   tmp_mod  = $urandom_range( 1,16 );
   do  
@@ -72,6 +70,8 @@ task accumd();
 endtask
     
 task check();
+  logic        res;
+  logic        test;
   forever
     begin
       bit_queue.get ( res );

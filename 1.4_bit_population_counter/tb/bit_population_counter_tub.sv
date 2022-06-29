@@ -3,12 +3,9 @@ parameter               WIDTH = 8
 )();
 logic [WIDTH-1:0]       data;
 logic                   data_val;
-logic [WIDTH-1:0]       tmp_data;
-logic [$clog2(WIDTH):0] tmp_data_result;
 logic [$clog2(WIDTH):0] data_result;
 logic                   data_val_result;
-logic [$clog2(WIDTH):0] res;
-logic [$clog2(WIDTH):0] test;
+
 
 
 logic                   srst;
@@ -44,17 +41,16 @@ bit_population_counter #(
 );
 
 task create_trans();
+  logic [WIDTH-1:0]       tmp_data;
+  logic [$clog2(WIDTH):0] tmp_data_result;
   tmp_data = $urandom();
   tmp_data_result = '0;
   if ( $urandom_range(10) > 2 )
     data_val = 1'b1;
   else
     data_val = 1'b0;
-
   data       = tmp_data;
-  for( int i = 0; i < WIDTH; i++ )
-      if ( tmp_data[i] )
-        tmp_data_result += 1;
+  tmp_data_result = $countones (tmp_data);
   if( data_val )
     ref_result.put ( tmp_data_result );
   ##1;
@@ -70,6 +66,8 @@ task accumd();
 endtask
 
 task check();
+  logic [$clog2(WIDTH):0] res;
+  logic [$clog2(WIDTH):0] test;
   forever
     begin
       result.get ( test );
