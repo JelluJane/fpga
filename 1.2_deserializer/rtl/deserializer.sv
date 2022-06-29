@@ -23,21 +23,24 @@ always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       begin
-        count <= 4'd0;
+        count <= 4'd15;
       end
     else
       if ( data_val_i )
 	      begin
-            if ( ~count )
+            if ( count == 4'd0 )
               count <= 4'd15;
             else
               count <= count - 1;
           end
   end
   
-always_ff @( posedge clk_i ) 
+always_comb
   begin
-    if ( data_val_i )
-      deser_data_o[count] <= data_i;
+    if (srst_i)
+      deser_data_o = '0;
+    else
+      if ( data_val_i )
+        deser_data_o[count] = data_i;
   end
 endmodule

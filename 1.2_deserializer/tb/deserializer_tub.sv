@@ -1,14 +1,21 @@
 module testbench_deserializer ();
-
-logic            srst;
 logic            data;
 logic            data_val;
 logic [15:0]     deser_data;
 logic            deser_data_val;
+logic            tmp_data;
+logic [15:0]     res;
+logic [15:0]     test;
+logic            tmp;
 
-bit              rst_done;
+
+parameter        TEST_LEN = 1000;
+
+logic            srst;
 bit              clk;
-int              i;
+
+mailbox          ref_result;
+mailbox          result;
 
 initial
   begin
@@ -32,42 +39,60 @@ deserializer dut     (
 .deser_data_val_o    (deser_data_val )
 );
 
-initial
-    begin
-    srst = 1'b0;
-    @( posedge clk );
-    srst = 1'b1;
-    @( posedge clk );
-    srst = 1'b0;
-    rst_done = 1'b1;
-    $display( "RESET DONE" );
-    end
-    
-initial
-    begin
-    wait ( rst_done );
-    ##1;
-    i        = 0;
+task create_trans();
+  tmp_data = $urandom();
+  
+  if ( $urandom_range(10) > 2 )
     data_val = 1'b1;
-    data     = 1'b1;
-    wait ( deser_data_val );
-    #1;
-    assert (deser_data === 16'b1111111111111111) else begin $error("failed"); i++; end
-    data     = 0;
-    ##4;
+  else
     data_val = 1'b0;
-    data     = 1;
-    ##4;
-    data_val = 1'b1;
-    data     = 0;
-    wait ( deser_data_val );
-    assert (deser_data === 16'b0000000000000000) else begin $error("failed"); i++; end
-    ##1;
-    if ( i )
-      $display (" the simulation is finished with  %d errors ", i);
-    else
-      $display (" the simulation is finished without  errors ");
-    ##1;
-    $finish;
+  data       = tmp_data;
+  if( data_val )
+    ref_result.put( data );
+  ##1;
+endtask
+
+task accumd();
+  forever
+    begin
+    @( posedge clk );
+      if( deser_data_val === 1'b1 )
+        result.put( deser_data );
     end
+endtask
+
+task check();
+  forever
+    begin
+	  for ( int i = 0; i < 16; i++ )
+        begin
+          ref_result.get( tmp );
+          test[(15-i)] = tmp;
+        end 
+      result.get ( res );
+	  if( res != test )
+        $error("error %b, %b", test, res);
+      else
+        ##1;
+    end
+endtask
+
+initial
+  begin
+    result = new();
+    ref_result = new();
+    srst = 1'b0;
+    ##1;
+    srst = 1'b1;
+    ##1;
+    srst = 1'b0;
+    ##1;
+    fork
+      accumd();
+      check();
+	  repeat (TEST_LEN) create_trans();
+    join_any
+    ##16;
+	$finish;
+  end
 endmodule
