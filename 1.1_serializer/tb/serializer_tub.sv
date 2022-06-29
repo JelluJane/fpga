@@ -70,14 +70,14 @@ task accumd();
         bit_queue.put( ser_data );
     end
 endtask
-
+    
 task check();
   forever
     begin
-	  bit_queue.get ( res );
-	  ref_bit_queue.get ( test );
-	  
-	  if( test !=  res )
+      bit_queue.get ( res );
+      ref_bit_queue.get ( test );
+      
+      if( test !=  res )
         $error("error %b, %b", test, res);
      
     end
@@ -86,19 +86,19 @@ endtask
 initial
   begin
     bit_queue = new();
-	ref_bit_queue = new();
-	srst = 1'b0;
+    ref_bit_queue = new();
+    srst = 1'b0;
     ##1;
     srst = 1'b1;
     ##1;
     srst = 1'b0;
     ##1;
-	fork
+    fork
       accumd();
       check();
     join_none
     repeat (TEST_LEN) create_trans();
     ##16;
-	$finish;
+    $finish;
   end
 endmodule

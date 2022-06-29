@@ -102,7 +102,7 @@ task check();
   forever
     begin
       r_ref_result.get ( r_test );
-	  l_ref_result.get ( l_test );
+      l_ref_result.get ( l_test );
       r_result.get ( r_res );
       l_result.get ( l_res );
       if( r_test !=  r_res )
@@ -116,7 +116,7 @@ initial
   begin
     r_result = new();
     r_ref_result = new();
-	l_result = new();
+    l_result = new();
     l_ref_result = new();
     srst = 1'b0;
     ##1;
@@ -130,6 +130,6 @@ initial
     join_none
     repeat (TEST_LEN) create_trans();
     ##16;
-	$finish;
+    $finish;
   end
 endmodule

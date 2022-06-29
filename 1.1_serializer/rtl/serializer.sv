@@ -27,7 +27,7 @@ always_ff @(posedge clk_i)
       if ( start ) 
         busy_o <= 1'b1;
       else
-	    if ( count == ( 15 - ser_long ) )
+        if ( count == ( 15 - ser_long ) )
           busy_o <= 1'b0;
   end
   
@@ -72,8 +72,8 @@ always_ff @ ( posedge clk_i )
         if ( count == ( 15 - ser_long ) )
           count <= 4'd15;           
         else
-		  if ( busy_o )
-		    count <= count - 1; 
+          if ( busy_o )
+            count <= count - 1; 
   end
   
 endmodule

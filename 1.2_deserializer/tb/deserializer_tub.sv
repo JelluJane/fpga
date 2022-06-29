@@ -64,13 +64,13 @@ endtask
 task check();
   forever
     begin
-	  for ( int i = 0; i < 16; i++ )
+      for ( int i = 0; i < 16; i++ )
         begin
           ref_result.get( tmp );
           test[(15-i)] = tmp;
         end 
       result.get ( res );
-	  if( res != test )
+      if( res != test )
         $error("error %b, %b", test, res);
       else
         ##1;
@@ -90,9 +90,9 @@ initial
     fork
       accumd();
       check();
-	  repeat (TEST_LEN) create_trans();
+      repeat (TEST_LEN) create_trans();
     join_any
     ##16;
-	$finish;
+    $finish;
   end
 endmodule

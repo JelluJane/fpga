@@ -27,7 +27,7 @@ always_ff @( posedge clk_i )
       end
     else
       if ( data_val_i )
-	      begin
+          begin
             if ( count == 4'd0 )
               count <= 4'd15;
             else

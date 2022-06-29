@@ -72,10 +72,10 @@ endtask
 task check();
   forever
     begin
-	  result.get ( test );
+      result.get ( test );
       ref_result.get ( res );
-	  
-	  if( test !=  res )
+      
+      if( test !=  res )
         $error("error %b, %b", test, res);
     end
 endtask
@@ -97,6 +97,6 @@ initial
     join_none
     repeat (TEST_LEN) create_trans();
     ##16;
-	$finish;
+    $finish;
   end
 endmodule
