@@ -1,24 +1,23 @@
 module testbench_serializer ();
-logic        srst;
 logic [15:0] data;
 logic [3:0]  data_mod;
 logic        data_val;
 logic        ser_data;
 logic        ser_data_val;
 logic        busy;
+logic [15:0] tmp_data;
+logic [4:0]  tmp_mod;
+logic        value_1;
+logic        value_2;
 
 parameter    TEST_LEN = 1000;
 
-int          i = 0;
 bit          clk;
+logic        srst;
 
-logic [15:0] res_tmp;
-logic [3:0]  mod_tmp;
-logic [15:0] realy_send    [$];
-logic [15:0] send_data     [$];
-logic [3:0]  send_data_mod [$];
-logic [15:0] results       [$];
-logic [3:0]  results_mod   [$];
+mailbox      ref_bit_queue;
+mailbox      bit_queue;
+
 
 initial
   begin
@@ -45,12 +44,8 @@ serializer dut  (
 );
 
 task create_trans();
-  logic [15:0] tmp_data;
-  logic [4:0]  tmp_mod;
-
   tmp_data = $urandom();
   tmp_mod  = $urandom_range( 1,16 );
-
   do  
     ##1;
   while( busy );
@@ -60,8 +55,8 @@ task create_trans();
     data_val = 1'b0;
   data       = tmp_data;
   data_mod   = tmp_mod[3:0];
-  if( ( mod > 2 ) && data_val )
-    for( int i = 0; i < mod; i++ )
+  if( ( data_mod > 2 ) && data_val )
+    for( int i = 0; i < data_mod; i++ )
       ref_bit_queue.put( data[15-i] );
   ##1;  
   data_val = 1'b0;
@@ -69,6 +64,7 @@ task create_trans();
 endtask
 
 task accumd();
+  bit_queue = new();
   forever
     begin
       if( ser_data_val === 1'b1 )
@@ -77,10 +73,17 @@ task accumd();
     end
 endtask
 
-//Таск проверки будет:
-//
-//Он может крутится всега по аналогиии с accumd.
-//Проверяет он, когда две очереди/mailbox не пусты.
+task check();
+  forever
+    begin
+	  bit_queue.get ( value_1 );
+	  ref_bit_queue.get ( value_2 );
+      if( value_1 !=  value_2 )
+        $error("всё плохо");
+      else
+        ##1;
+    end
+endtask
 
 initial
   begin
@@ -90,13 +93,13 @@ initial
     ##1;
     srst = 1'b0;
     ##1;
+	ref_bit_queue = new();
     fork
-    accumd();
-    //Ваш task для проверки
-    // Эти таски в бесконечном цикле крутятся,
-    // поэтому не ждем когда они закончатся
+      accumd();
+      check();
     join_none
     repeat (TEST_LEN) create_trans();
     ##16;
 	
   end
+endmodule
