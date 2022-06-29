@@ -1,15 +1,23 @@
 module testbench_bit_population_counter #(
 parameter               WIDTH = 8
 )();
-logic                   srst;
 logic [WIDTH-1:0]       data;
 logic                   data_val;
+logic [WIDTH-1:0]       tmp_data;
+logic [$clog2(WIDTH):0] tmp_data_result;
 logic [$clog2(WIDTH):0] data_result;
 logic                   data_val_result;
+logic [$clog2(WIDTH):0] res;
+logic [$clog2(WIDTH):0] test;
 
-bit                     rst_done;
+
+logic                   srst;
 bit                     clk;
-int                     i;
+
+parameter    TEST_LEN = 1000;
+
+mailbox                 ref_result;
+mailbox                 result;
 
 initial
   begin
@@ -35,31 +43,60 @@ bit_population_counter #(
 .data_val_o            (data_val_result)
 );
 
-initial
-  begin
-    srst = 1'b0;
-    @( posedge clk );
-    srst = 1'b1;
-    @( posedge clk );
-    srst = 1'b0;
-    rst_done = 1'b1;
-    $display( "RESET DONE" );
-  end
-initial
-  begin
-    wait(rst_done);
-    ##1;
-    i = 0;
+task create_trans();
+  tmp_data = $urandom();
+  tmp_data_result = '0;
+  if ( $urandom_range(10) > 2 )
     data_val = 1'b1;
-    data = 14; 
-    
-    
-    
-    if ( i )
-      $display (" the simulation is finished with %d errors ", i);
-    else
-      $display (" the simulation is finished without errors ");
+  else
+    data_val = 1'b0;
+
+  data       = tmp_data;
+  for( int i = 0; i < WIDTH; i++ )
+      if ( tmp_data[i] )
+        tmp_data_result += 1;
+  if( data_val )
+    ref_result.put ( tmp_data_result );
+  ##1;
+endtask
+
+task accumd();
+  forever
+    begin
+      if( data_val_result === 1'b1 )
+        result.put( data_result );
+      ##1;
+    end
+endtask
+
+task check();
+  forever
+    begin
+	  result.get ( test );
+      ref_result.get ( res );
+	  
+	  if( test !=  res )
+        $error("error %b, %b", test, res);
+    end
+endtask
+
+
+initial
+  begin
+    result = new();
+    ref_result = new();
+    srst = 1'b0;
     ##1;
-    $finish;
+    srst = 1'b1;
+    ##1;
+    srst = 1'b0;
+    ##1;
+    fork
+      accumd();
+      check();
+    join_none
+    repeat (TEST_LEN) create_trans();
+    ##16;
+	$finish;
   end
 endmodule

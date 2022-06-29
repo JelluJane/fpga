@@ -2,7 +2,6 @@ module testbench_priority_encoder #(
 parameter              WIDTH = 8
 )();
 logic    [WIDTH-1:0]   data;
-logic                  srst;
 logic                  data_val;
 logic    [WIDTH-1:0]   data_left;
 logic    [WIDTH-1:0]   data_right;
@@ -10,8 +9,10 @@ logic                  deser_data_val;
 logic    [WIDTH-1:0]   tmp_data;
 logic    [WIDTH-1:0]   tmp_left;
 logic    [WIDTH-1:0]   tmp_right;
-logic    [WIDTH-1:0]   res;
-logic    [WIDTH-1:0]   test;
+logic    [WIDTH-1:0]   r_res;
+logic    [WIDTH-1:0]   r_test;
+logic    [WIDTH-1:0]   l_res;
+logic    [WIDTH-1:0]   l_test;
 
 parameter              TEST_LEN = 1000;
 
@@ -60,7 +61,7 @@ task create_trans();
   data       = tmp_data;
   if( data_val )
     begin
-      for( int i = 0; i < WITDH; i++ ) 
+      for( int i = 0; i < WIDTH; i++ ) 
         begin  
           if ( tmp_data[i] )
             begin
@@ -68,11 +69,11 @@ task create_trans();
               break;
             end
         end
-      for( int i = 0; i < WITDH; i++ )  
+      for( int i = 0; i < WIDTH; i++ )  
         begin 
-          if ( tmp_data[WITDH-i] )
+          if ( tmp_data[( WIDTH-1 ) -i] )
             begin
-              tmp_left[WITDH-i] = 1;
+              tmp_left[( WIDTH-1 ) -i] = 1;
               break;
             end
         end
@@ -100,14 +101,14 @@ endtask
 task check();
   forever
     begin
-      r_result.put.get ( res );
-      r_ref_result.get ( test );
-      if( test !=  res )
-        $error("error %b, %b", test, res); 
-      l_result.put.get ( res );
-      l_ref_result.get ( test );
-      if( test !=  res )
-        $error("error %b, %b", test, res); 
+      r_ref_result.get ( r_test );
+	  l_ref_result.get ( l_test );
+      r_result.get ( r_res );
+      l_result.get ( l_res );
+      if( r_test !=  r_res )
+        $error("error %b, %b", r_test, r_res); 
+      if( l_test !=  l_res )
+        $error("error %b, %b", l_test, l_res); 
     end
 endtask
 
@@ -129,6 +130,6 @@ initial
     join_none
     repeat (TEST_LEN) create_trans();
     ##16;
-	
+	$finish;
   end
 endmodule
