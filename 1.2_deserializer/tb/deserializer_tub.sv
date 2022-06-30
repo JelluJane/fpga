@@ -39,7 +39,6 @@ deserializer dut     (
 task create_trans();
   logic tmp_data;
   tmp_data = $urandom();
-  
   if ( $urandom_range(10, 0) > 1 )
     data_val = 1'b1;
   else
@@ -65,12 +64,13 @@ task check();
   logic [15:0]     test;
   forever
     begin
-      result.get ( res );
+      
       for ( int i = 0; i < 16; i++ )
         begin
           ref_result.get( tmp );
           test[(15-i)] = tmp;
         end 
+      result.get ( res );
       if( res != test )
         $error("error %b, %b", test, res);
       else

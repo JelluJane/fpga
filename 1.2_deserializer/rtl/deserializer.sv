@@ -14,10 +14,11 @@ always_ff @( posedge clk_i )
     if ( srst_i )
       deser_data_val_o <= 1'd0;
     else
-      if ( count == 5'd0 )
-        deser_data_val_o <= 1'b1;
-      else
+      if ( deser_data_val_o )     
         deser_data_val_o <= 1'b0;
+      else
+        if ( ( count == 5'd0 ) && data_val_i )
+          deser_data_val_o <= 1'b1;
   end
 
 always_ff @( posedge clk_i )  
@@ -37,7 +38,7 @@ always_ff @( posedge clk_i )
     if ( srst_i )
      deser_data_o <= '0;
     else
-      if ( ( count != 5'd0 ) && (count != 5'd15) && ( data_val_i ) )
+      if ( (count != 5'd15) && ( data_val_i ) )
         begin
           deser_data_o[count ] <= data_i;
           deser_data_o[15] <= first_bite;
