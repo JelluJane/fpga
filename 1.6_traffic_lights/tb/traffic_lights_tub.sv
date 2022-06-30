@@ -69,7 +69,7 @@ task check ();
   do
     begin
     cnt += 1;
-   	##1;
+       ##1;
     end
   while ( red && ( yellow == 1'b0 ) );
   if ( cnt != ( ( tmp_r * 2 ) + 1 ) )
@@ -79,17 +79,17 @@ task check ();
   do
     begin
     cnt += 1;
-   	##1;
+       ##1;
     end
   while ( green );
   if ( cnt != ( ( tmp_g * 2 ) + 2 ) ) //хоть убейте не понимаю, почему тут смещение на 2... в красном логичное смещение на 1, а тут...
     $error("error with green, cnt = %d, tmp_g = %d", cnt, tmp_g);
-  cnt = 0;	
+  cnt = 0;    
   wait ( yellow )
   do
     begin
     cnt += 1;
-   	##1;
+       ##1;
     end
   while ( yellow );
   if ( cnt != ( ( tmp_y * 2 ) + 2 ) ) // та же фигня
@@ -108,8 +108,8 @@ initial
     repeat ( TEST_LEN )
       begin
       gen_properties();
-	  check ();
-      end	  
-	$finish;
+      check ();
+      end      
+    $finish;
   end
 endmodule

@@ -17,26 +17,21 @@ logic       [16:0]   green_time;
 logic       [15:0]   count;
 logic       [15:0]   g_blink_count;
 logic       [15:0]   y_blink_count;
-logic       [15:0]   blink_time;   
-logic       [15:0]   red_yel_time;
-logic       [15:0]   green_blink_time;
 
 //тут меняем интервал мигания для мигающих состояний и длительность непрограммируемых состояний.
 //1 мс = 2 такта
 
-assign red_yel_time     = 16'd100;
-assign green_blink_time = 16'd100;
-assign blink_time       = 16'd10;
+localparam  [15:0]   blink_time       = 16'd100;   
+localparam  [15:0]   red_yel_time     = 16'd100;
+localparam  [15:0]   green_blink_time = 16'd10;
 
-
-
-enum logic [2:0] {RED,
-                  RED_YEL,
-                  GREEN,
-                  GREEN_BLINK,
-                  YELLOW,
-                  YELLOW_BLINK,
-                  WAITING_MOD } state, next_state;
+enum logic [2:0] {RED_S,
+                  RED_YEL_S,
+                  GREEN_S,
+                  GREEN_BLINK_S,
+                  YELLOW_S,
+                  YELLOW_BLINK_S,
+                  WAITING_MOD_S } state, next_state;
 
 
 // сначала конечный автомат.
@@ -45,7 +40,7 @@ enum logic [2:0] {RED,
 always_ff @( posedge clk_i )
 begin
   if (srst_i)
-    state <= RED;
+    state <= RED_S;
   else
     state <= next_state;
 end
@@ -55,66 +50,66 @@ end
 always_comb
 begin
   case ( state )
-    RED:
+    RED_S:
       if ( turn_off )
-        next_state     = WAITING_MOD;
+        next_state     = WAITING_MOD_S;
       else
         if ( free_mod )
-          next_state   = YELLOW_BLINK;
+          next_state   = YELLOW_BLINK_S;
         else  
           if ( count == red_time )
-            next_state = RED_YEL;
-    RED_YEL:
+            next_state = RED_YEL_S;
+    RED_YEL_S:
       if ( turn_off )
-        next_state     = WAITING_MOD;
+        next_state     = WAITING_MOD_S;
       else
         if ( free_mod )
-          next_state   = YELLOW_BLINK;
+          next_state   = YELLOW_BLINK_S;
         else  
           if ( count == red_yel_time )
-            next_state = GREEN;
-    GREEN:
+            next_state = GREEN_S;
+    GREEN_S:
       if ( turn_off )
-        next_state     = WAITING_MOD;
+        next_state     = WAITING_MOD_S;
       else
         if ( free_mod )
-          next_state   = YELLOW_BLINK;
+          next_state   = YELLOW_BLINK_S;
         else  
           if ( count == green_time )
-            next_state = GREEN_BLINK;
-    GREEN_BLINK:
+            next_state = GREEN_BLINK_S;
+    GREEN_BLINK_S:
       if ( turn_off )
-        next_state     = WAITING_MOD;
+        next_state     = WAITING_MOD_S;
       else    
         if ( free_mod )
-          next_state   = YELLOW_BLINK;
+          next_state   = YELLOW_BLINK_S;
         else    
           if ( count == green_blink_time )
-            next_state = YELLOW;
-    YELLOW:
+            next_state = YELLOW_S;
+    YELLOW_S:
       if ( turn_off )
-        next_state     = WAITING_MOD;
+        next_state     = WAITING_MOD_S;
       else
         if ( free_mod )
-          next_state   = YELLOW_BLINK;
+          next_state   = YELLOW_BLINK_S;
         else  
           if ( count == yellow_time )
-            next_state = RED;
-    YELLOW_BLINK:
+            next_state = RED_S;
+    YELLOW_BLINK_S:
       if ( turn_off )
-        next_state     = WAITING_MOD;
+        next_state     = WAITING_MOD_S;
       else
         if ( ~free_mod )
-          next_state   = RED;
-    WAITING_MOD:
+          next_state   = RED_S;
+    WAITING_MOD_S:
       if ( ~turn_off )
         if ( free_mod )
-          next_state   = YELLOW_BLINK;
+          next_state   = YELLOW_BLINK_S;
         else  
-          next_state   = RED;
+          next_state   = RED_S;
       
     default:
-      next_state = RED;
+      next_state = RED_S;
   endcase
 end
 
@@ -124,43 +119,43 @@ end
 always_comb
 begin
   case ( state )
-    RED:
+    RED_S:
       begin
       red_o    = 1'b1;
       yellow_o = 1'b0;
       green_o  = 1'b0;
       end
-    RED_YEL:
+    RED_YEL_S:
       begin
       red_o    = 1'b1;
       yellow_o = 1'b1;
       green_o  = 1'b0;
       end
-    GREEN:
+    GREEN_S:
       begin
       red_o    = 1'b0;
       yellow_o = 1'b0;
       green_o  = 1'b1;
       end
-    GREEN_BLINK:
+    GREEN_BLINK_S:
       begin
       red_o    = 1'b0;
       yellow_o = 1'b0;
       green_o  = blink_on;
       end
-    YELLOW:
+    YELLOW_S:
       begin
       red_o    = 1'b0;
       yellow_o = 1'b1;
       green_o  = 1'b0;
       end
-    YELLOW_BLINK:
+    YELLOW_BLINK_S:
       begin
       red_o    = 1'b0;
       yellow_o = blink_on;
       green_o  = 1'b0;
       end
-    WAITING_MOD:
+    WAITING_MOD_S:
       begin
       red_o    = 1'b0;
       yellow_o = 1'b0;
@@ -188,22 +183,22 @@ begin
 	end
   else
     case ( state )
-      RED:
+      RED_S:
         if ( count == red_time )
           count    <= 16'd0;
         else
           count    <= count + 1;
-      RED_YEL:
+      RED_YEL_S:
         if ( count == red_yel_time )
           count    <= 16'd0;
         else
           count    <= count + 1;
-      GREEN:
+      GREEN_S:
         if ( count == green_time )
           count    <= 16'd0;
         else
           count    <= count + 1;
-      GREEN_BLINK:
+      GREEN_BLINK_S:
         begin
         if ( count       == green_blink_time )
           begin
@@ -221,12 +216,12 @@ begin
         else
           g_blink_count  <= g_blink_count + 1;  
         end
-      YELLOW:
+      YELLOW_S:
         if (count        == yellow_time)
           count          <= 16'd0;
         else
           count          <= count + 1;
-      YELLOW_BLINK:
+      YELLOW_BLINK_S:
         if ( y_blink_count == blink_time )
           begin
             blink_on     <= ~ blink_on;  
@@ -234,7 +229,7 @@ begin
           end
         else
           y_blink_count  <= y_blink_count + 1;
-      WAITING_MOD:
+      WAITING_MOD_S:
         count            <= 16'd0;
       default:
         ;
