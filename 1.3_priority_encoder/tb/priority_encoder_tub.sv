@@ -7,8 +7,6 @@ logic    [WIDTH-1:0]   data_left;
 logic    [WIDTH-1:0]   data_right;
 logic                  deser_data_val;
 
-
-
 parameter              TEST_LEN = 1000;
 
 bit                    clk;

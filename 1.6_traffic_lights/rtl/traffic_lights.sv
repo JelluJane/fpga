@@ -235,7 +235,7 @@ begin
         else
           y_blink_count  <= y_blink_count + 1;
       WAITING_MOD:
-        ;
+        count            <= 16'd0;
       default:
         ;
     endcase
