@@ -55,7 +55,7 @@ task create_trans();
   data       = tmp_data;
   data_mod   = tmp_mod[3:0];
   if ( ( tmp_mod > 2 ) && ( data_val ) )
-    for( int i = 0; i < ( tmp_mod ) ; i++ )
+    for( int i = 0; i < ( tmp_mod -1 ) ; i++ )
       ref_bit_queue.put( tmp_data[15-i] );
   ##1; 
 endtask

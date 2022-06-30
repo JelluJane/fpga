@@ -11,13 +11,13 @@ output logic       busy_o = 1'b0
 );
 
 logic       [15:0] work_data;
-logic       [3:0]  ser_long;  
+logic       [4:0]  ser_long;  
 logic       [3:0]  count;    
 logic              start;
 
 assign start          = ( (     data_val_i     ) & (   count == 4'd15    ) & 
                           ( data_mod_i != 4'd1 ) & ( data_mod_i != 4'd2  ) );
-assign ser_data_val_o = ( ( count != 4'd15 ) || start );   
+assign ser_data_val_o = ( ( count != 4'd15 ) );   
 
 always_ff @(posedge clk_i)
   begin
@@ -27,29 +27,32 @@ always_ff @(posedge clk_i)
       if ( start ) 
         busy_o <= 1'b1;
       else
-        if ( count == ( 15 - ser_long ) )
+        if ( count == ( 16 - ser_long ) )
           busy_o <= 1'b0;
   end
   
-always_comb
-  begin  
-    if ( start )
-      ser_data_o = data_i[15]; 
+always_ff @(posedge clk_i)
+  begin 
+    if ( srst_i )
+      ser_data_o <= 1'b0;
     else
-      if ( busy_o )
-        ser_data_o = work_data[count];
-  end
+      if ( start )
+        ser_data_o <= data_i[15]; 
+      else
+        if ( busy_o )
+          ser_data_o <= work_data[count];
+    end
  
 always_ff @ (posedge clk_i)
   begin
     if ( srst_i )
-      ser_long <= 4'd0;
+      ser_long <= 5'd0;
     else
       if ( start )
         if ( data_mod_i == 0 )   
-          ser_long <= 4'd15;
+          ser_long <= 5'd16;
         else        
-          ser_long <= data_mod_i - 1;
+          ser_long <= data_mod_i;
   end
 
 always_ff @ ( posedge clk_i )
@@ -69,7 +72,7 @@ always_ff @ ( posedge clk_i )
       if ( start )
         count <= count - 1;
       else
-        if ( count == ( 15 - ser_long ) )
+        if ( count == ( 16 - ser_long ) )
           count <= 4'd15;           
         else
           if ( busy_o )

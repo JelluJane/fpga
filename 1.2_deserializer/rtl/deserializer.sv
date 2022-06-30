@@ -6,35 +6,50 @@ input  logic          data_val_i,
 output logic [15:0]   deser_data_o = '0,
 output logic          deser_data_val_o = 1'b0);
 
-logic        [3:0]    count;
+logic        [4:0]    count;
+logic                 first_bite;
 
-always_comb
+always_ff @( posedge clk_i )  
   begin
-    if ( ( count == 4'd0 ) & data_val_i )
-      deser_data_val_o = 1'b1;
+    if ( srst_i )
+      deser_data_val_o <= 1'd0;
     else
-      deser_data_val_o = 1'b0;
+      if ( count == 5'd0 )
+        deser_data_val_o <= 1'b1;
+      else
+        deser_data_val_o <= 1'b0;
   end
 
 always_ff @( posedge clk_i )  
   begin
     if ( srst_i )
-      begin
-        count <= 4'd15;
-      end
+        count <= 5'd15;
     else
       if ( data_val_i )
-          begin
-            if ( count == 4'd0 )
-              count <= 4'd15;
-            else
-              count <= count - 1;
-          end
+        if ( count == 5'd0 )
+          count <= 5'd15;
+        else
+          count <= count - 1;
   end
   
-always_comb
+always_ff @( posedge clk_i )
   begin
-    if ( data_val_i )
-      deser_data_o[count] = data_i;
+    if ( srst_i )
+     deser_data_o <= '0;
+    else
+      if ( ( count != 5'd0 ) && (count != 5'd15) && ( data_val_i ) )
+        begin
+          deser_data_o[count ] <= data_i;
+          deser_data_o[15] <= first_bite;
+        end
+  end
+  
+always_ff @( posedge clk_i )
+  begin
+    if ( srst_i )
+      first_bite <= 1'b0; 
+    else
+       if ( ( count == 5'd15 ) && data_val_i )   
+         first_bite <= data_i;
   end
 endmodule
