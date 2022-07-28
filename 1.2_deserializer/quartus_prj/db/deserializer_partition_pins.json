@@ -1,0 +1,93 @@
+{
+	"partitions" : [
+		{
+			"name" : "Top",
+			"pins" : [
+				{
+					"name" : "deser_data_o[0]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[1]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[2]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[3]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[4]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[5]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[6]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[7]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[8]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[9]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[10]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[11]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[12]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[13]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[14]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_o[15]",
+					"strict" : false
+				},
+				{
+					"name" : "deser_data_val_o",
+					"strict" : false
+				},
+				{
+					"name" : "clk_i",
+					"strict" : false
+				},
+				{
+					"name" : "data_i",
+					"strict" : false
+				},
+				{
+					"name" : "data_val_i",
+					"strict" : false
+				},
+				{
+					"name" : "srst_i",
+					"strict" : false
+				}
+			]
+		}
+	]
+}

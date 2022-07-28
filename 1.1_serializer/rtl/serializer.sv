@@ -7,7 +7,7 @@ input logic        data_val_i,
 
 output logic       ser_data_o,
 output logic       ser_data_val_o,
-output logic       busy_o = 1'b0
+output logic       busy_o
 );
 
 logic       [15:0] work_data;
@@ -70,13 +70,13 @@ always_ff @ ( posedge clk_i )
         count <= 4'd15;
     else
       if ( start )
-        count <= count - 1;
+        count <= count - 1'b1;
       else
         if ( count == ( 16 - ser_long ) )
           count <= 4'd15;           
         else
           if ( busy_o )
-            count <= count - 1; 
+            count <= count - 1'b1; 
   end
   
 endmodule
