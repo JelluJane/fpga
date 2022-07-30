@@ -1,0 +1,113 @@
+{
+	"partitions" : [
+		{
+			"name" : "Top",
+			"pins" : [
+				{
+					"name" : "snk_ready_o",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[0]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[1]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[2]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[3]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[4]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[5]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[6]",
+					"strict" : false
+				},
+				{
+					"name" : "src_data_o[7]",
+					"strict" : false
+				},
+				{
+					"name" : "src_startofpacket_o",
+					"strict" : false
+				},
+				{
+					"name" : "src_endofpacket_o",
+					"strict" : false
+				},
+				{
+					"name" : "src_valid_o",
+					"strict" : false
+				},
+				{
+					"name" : "srst_i",
+					"strict" : false
+				},
+				{
+					"name" : "snk_endofpacket_i",
+					"strict" : false
+				},
+				{
+					"name" : "snk_valid_i",
+					"strict" : false
+				},
+				{
+					"name" : "clk_i",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[0]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[1]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[2]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[3]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[4]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[5]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[6]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_data_i[7]",
+					"strict" : false
+				},
+				{
+					"name" : "snk_startofpacket_i",
+					"strict" : false
+				},
+				{
+					"name" : "src_ready_i",
+					"strict" : false
+				}
+			]
+		}
+	]
+}

@@ -56,7 +56,7 @@ assign src_data_o = q_a;
 //жопой чую, что такое количество комбинационной логики мне аукнется петлями.
 //write and read data
 
-RAM2p #() memory (
+RAM2p memory (
 .address_a       ( addr_a ),
 .address_b       ( addr_b ),
 .clock           ( clk_i  ),
