@@ -20,18 +20,22 @@ output logic        src_valid_o
 
 //вспомогательные переменные
 
+localparam                      ADDR_W = $clog2(MAX_PKT_LEN);
+
 logic                           in_rec;
 logic                           check;
-logic [$clog2(MAX_PKT_LEN)-1:0] sorting_count;
+logic [ADDR_W-1:0]              sorting_count;
+
+
 
 //память 
 
 logic                           wren_a;
 logic                           wren_b;
-logic [$clog2(MAX_PKT_LEN)-1:0] w_addr;
-logic [$clog2(MAX_PKT_LEN)-1:0] r_addr;
-logic [$clog2(MAX_PKT_LEN)-1:0] addr_a;
-logic [$clog2(MAX_PKT_LEN)-1:0] addr_b;
+logic [ADDR_W-1:0] w_addr;
+logic [ADDR_W-1:0] r_addr;
+logic [ADDR_W-1:0] addr_a;
+logic [ADDR_W-1:0] addr_b;
 logic [DWIDTH-1:0]              data_a;
 logic [DWIDTH-1:0]              data_b;
 logic [DWIDTH-1:0]              q_a;
@@ -128,7 +132,7 @@ always_ff @( posedge clk_i )
       if ( src_valid_o )
         check <= 1'b0;
       else
-        if ( !sorting_count )
+        if ( sorting_count == '0 )
           check <= 1'b1;
         else
           if ( q_a > q_b )

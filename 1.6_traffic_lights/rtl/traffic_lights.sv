@@ -177,9 +177,9 @@ begin
   if ( srst_i )
     begin
       g_blink_count <= 16'd0;
-	  y_blink_count <= 16'd0;
+      y_blink_count <= 16'd0;
       count         <= 16'd0;
-	  blink_on      <= 1'b0;
+      blink_on      <= 1'b0;
 	end
   else
     case ( state )
