@@ -121,7 +121,7 @@ endtask
 
 initial
   begin
-    test_len = 111;
+    test_len = 10;
     generate_data();
     ##1;
     srst = 1'b1;

@@ -56,8 +56,9 @@ RAM2p memory (
 
 //FSM
 
-enum logic [1:0] {IDLE_S,
+enum logic [2:0] {IDLE_S,
                   WRITE_S,
+                  WAIT_S,
                   SORT_S,
                   READ_S} 
                   state, next_state;
@@ -72,20 +73,23 @@ always_ff @( posedge clk_i )
 
 always_comb
   begin
+    next_state = state;
     case ( state )
     IDLE_S:
       if ( snk_valid_i && snk_startofpacket_i )
         next_state = WRITE_S;
     WRITE_S:
       if ( snk_valid_i && snk_endofpacket_i )
-        next_state = SORT_S;
+        next_state = WAIT_S;
+    WAIT_S:
+      next_state = SORT_S;
     SORT_S:
       if ( w_cnt == (ADDR_W)'(1) )
         next_state = READ_S;
-      else if ( ( sort_cnt === w_cnt ) && check )
+      else if ( ( sort_cnt === ( w_cnt - (ADDR_W)'(1) ) ) && check )
         next_state = READ_S;
     READ_S:
-      if ( r_cnt == w_cnt )
+      if ( r_cnt == ( w_cnt - (ADDR_W)'(1) ) )
         next_state = IDLE_S;
     endcase
   end
@@ -105,15 +109,20 @@ always_comb
       begin
         snk_ready_o = 1'b0;
         wren_a = snk_valid_i;
-        addr_a = w_cnt;
+        addr_a = w_cnt + (ADDR_W)'(1);
+        addr_b = (ADDR_W)'(1);
         data_a = snk_data_i;
+      end
+    WAIT_S:
+      begin
+        addr_a = '0;
       end
     SORT_S:
       begin
         data_a = q_b;
         data_b = q_a;
-        wren_a = q_b < q_a;
-        wren_b = q_b < q_a;
+        wren_a = ( q_a > q_b ) ? 1'b1: 1'b0;
+        wren_b = ( q_a > q_b ) ? 1'b1: 1'b0;
         addr_a = sort_cnt;
         addr_b = sort_cnt + (ADDR_W)'(1);
       end
@@ -143,7 +152,7 @@ always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       sort_cnt <= '0;
-    else if ( ( state == SORT_S ) && ( sort_cnt < (w_cnt - (ADDR_W)'(1)) ) )
+    else if ( ( state == SORT_S ) && ( sort_cnt < w_cnt - (ADDR_W)'(1) ) )
       sort_cnt <= sort_cnt + (ADDR_W)'(1);
     else
       sort_cnt <= '0;
@@ -156,7 +165,7 @@ always_ff @( posedge clk_i )
     if ( srst_i )
       r_cnt <= '0;
     else if ( state == READ_S )
-      r_cnt <= r_cnt + src_ready_i;
+      r_cnt <= r_cnt + (ADDR_W)'(1); //вот тут должен был бы быть прибавлен src_ready_i, но при отсутствии внешнего водуля он неопределён.
     else
       r_cnt <= '0;
   end
