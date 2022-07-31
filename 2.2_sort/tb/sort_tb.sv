@@ -98,24 +98,27 @@ endtask
   
 task read();
   begin
-    wait ( src_startofpacket );
-    repeat ( test_len )
+    wait ( src_startofpacket && src_valid );
+    do
       begin
         read_data_dut.push_back( src_data );
         ##1;
       end
+    while ( src_endofpacket );
   end
 endtask
 
 task check();
   begin
-//    logic [DWIDTH-1:0] tmp_dut;
-//    logic [DWIDTH-1:0] tmp_ref;
-  for ( int i = 0; i < test_len; i++ )
-    begin
-      if ( read_data_dut[i] !== read_data_ref[i] )
-        $error( "the result does not match the standard" );
-    end
+    logic [DWIDTH-1:0] tmp_dut;
+    logic [DWIDTH-1:0] tmp_ref;
+    for ( int i = 0; i < test_len; i++ )
+      begin
+        tmp_dut = read_data_dut[i];
+        tmp_ref = read_data_ref[i];
+        if ( tmp_dut != tmp_ref )
+          $error( "the result does not match the standard" );
+      end
   end
 endtask
 
@@ -131,17 +134,17 @@ initial
     send();
     read();
     check();
-    repeat ( 3 )
-      begin
-        ##1;
-        generate_data();
-        test_len = $urandom_range( 100,1000 );
-        send();
-        read();
-        check();
-      end
+    // repeat ( 3 )
+      // begin
+        // ##1;
+        // generate_data();
+        // test_len = $urandom_range( 100,1000 );
+        // send();
+        // read();
+        // check();
+      // end
     ##1;
-    test_len = 1024;
+    test_len = 1023;
     generate_data();
     send();
     read();

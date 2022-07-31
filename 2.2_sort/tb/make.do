@@ -1,6 +1,6 @@
 vlib work
 
-vlog -sv ../rtl/RAM2p.v
+vlog -sv ../rtl/ram.v
 vlog -sv ../rtl/sort.sv
 vlog -sv sort_tb.sv
 

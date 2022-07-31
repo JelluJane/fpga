@@ -22,6 +22,7 @@ output logic        src_valid_o
 
 localparam                      ADDR_W = $clog2(MAX_PKT_LEN);
 
+logic                           sorted;
 logic                           check;
 logic [ADDR_W-1:0]              sort_cnt;
 logic [ADDR_W-1:0]              w_cnt;
@@ -42,7 +43,7 @@ logic [DWIDTH-1:0]              q_b;
 
 assign src_data_o = q_a;
 
-RAM2p memory (
+ram memory (
 .address_a       ( addr_a ),
 .address_b       ( addr_b ),
 .clock           ( clk_i  ),
@@ -58,8 +59,8 @@ RAM2p memory (
 
 enum logic [2:0] {IDLE_S,
                   WRITE_S,
-                  WAIT_S,
                   SORT_S,
+                  SET_ADDR_S,
                   READ_S} 
                   state, next_state;
                   
@@ -80,17 +81,19 @@ always_comb
         next_state = WRITE_S;
     WRITE_S:
       if ( snk_valid_i && snk_endofpacket_i )
-        next_state = WAIT_S;
-    WAIT_S:
-      next_state = SORT_S;
+        next_state = SET_ADDR_S;
     SORT_S:
-      if ( w_cnt == (ADDR_W)'(1) )
+      next_state = SET_ADDR_S;
+    SET_ADDR_S:
+      if ( sorted )
         next_state = READ_S;
-      else if ( ( sort_cnt === ( w_cnt - (ADDR_W)'(1) ) ) && check )
-        next_state = READ_S;
+      else
+        next_state = SORT_S;
     READ_S:
-      if ( r_cnt == ( w_cnt - (ADDR_W)'(1) ) )
+      if ( r_cnt == w_cnt )
         next_state = IDLE_S;
+      else
+        next_state = SET_ADDR_S;
     endcase
   end
 
@@ -109,22 +112,24 @@ always_comb
       begin
         snk_ready_o = 1'b0;
         wren_a = snk_valid_i;
-        addr_a = w_cnt + (ADDR_W)'(1);
+        addr_a = w_cnt;
         addr_b = (ADDR_W)'(1);
         data_a = snk_data_i;
       end
-    WAIT_S:
-      begin
-        addr_a = '0;
-      end
     SORT_S:
       begin
+        wren_a = q_a > q_b;
+        wren_b = q_a > q_b;
         data_a = q_b;
         data_b = q_a;
-        wren_a = ( q_a > q_b ) ? 1'b1: 1'b0;
-        wren_b = ( q_a > q_b ) ? 1'b1: 1'b0;
-        addr_a = sort_cnt;
+      end
+    SET_ADDR_S:
+      begin
+        addr_a = sorted ? r_cnt : sort_cnt;
         addr_b = sort_cnt + (ADDR_W)'(1);
+        wren_a = 1'b0;
+        wren_b = 1'b0;
+        src_valid_o = 1'b0;
       end
     READ_S:
       begin
@@ -139,9 +144,9 @@ always_comb
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
-      w_cnt <= '0;
+      w_cnt <= (ADDR_W)'(1);
     else if ( state == IDLE_S )
-      w_cnt <= '0;
+      w_cnt <= (ADDR_W)'(1);
     else if ( ( state == WRITE_S ) && snk_valid_i )
       w_cnt <= w_cnt + (ADDR_W)'(1);
   end
@@ -152,8 +157,10 @@ always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       sort_cnt <= '0;
-    else if ( ( state == SORT_S ) && ( sort_cnt < w_cnt - (ADDR_W)'(1) ) )
+    else if ( ( state == SET_ADDR_S ) && ( sort_cnt < w_cnt - (ADDR_W)'(2) ) )
       sort_cnt <= sort_cnt + (ADDR_W)'(1);
+    else if ( state == SORT_S )
+      sort_cnt <= sort_cnt;
     else
       sort_cnt <= '0;
   end
@@ -164,27 +171,39 @@ always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       r_cnt <= '0;
-    else if ( state == READ_S )
+    else if ( ( state == SET_ADDR_S ) && sorted )
       r_cnt <= r_cnt + (ADDR_W)'(1); //вот тут должен был бы быть прибавлен src_ready_i, но при отсутствии внешнего водуля он неопределён.
+    else if ( state == READ_S )
+      r_cnt <= r_cnt;
     else
       r_cnt <= '0;
   end
 
 //флаг отсортированного массива
+
+always_ff @( posedge clk_i )
+  begin
+    if ( srst_i )
+      sorted <= 1'b0;
+    else if ( state == IDLE_S )
+      sorted <= 1'b0;
+    else if ( sort_cnt == ( w_cnt - (ADDR_W)'(2) ) && check && ( q_a < q_b ) && ( state == SORT_S ) )
+      sorted <= 1'b1;
+  end
+ 
+// 
   
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
-      check <= 1'b1;
+      check <= 1'b0;
     else
-      if ( state != SORT_S )
+      if ( state == IDLE_S )
         check <= 1'b0;
-      else
-        if ( sort_cnt == '0 )
-          check <= 1'b1;
-        else
-          if ( q_a > q_b )
-            check <= 1'b0;
+      else if ( ( sort_cnt == '0 ) && ( q_a < q_b ) )
+        check <= 1'b1;
+      else if ( q_a > q_b )
+          check <= 1'b0;
   end
 
 //начало транзакции на выходе
@@ -209,7 +228,7 @@ always_ff @( posedge clk_i )
     else
       if ( src_endofpacket_o )
         src_endofpacket_o <= 1'b0;
-      else if ( ( state == READ_S ) && ( r_cnt == w_cnt ) )
+      else if ( r_cnt == ( w_cnt - (ADDR_W)'(1) ) && ( state == SET_ADDR_S) ) 
         src_endofpacket_o <= 1'b1;
   end
 
