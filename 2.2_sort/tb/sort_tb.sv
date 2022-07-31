@@ -98,13 +98,13 @@ endtask
   
 task read();
   begin
-    wait ( src_startofpacket && src_valid );
-    do
-      begin
-        read_data_dut.push_back( src_data );
-        ##1;
-      end
-    while ( src_endofpacket );
+    if ( src_startofpacket && src_valid );
+      for ( int i = 0; i < test_len; i ++)
+        begin
+          read_data_dut.push_back( src_data );
+          ##1;
+          wait ( src_valid );
+        end
   end
 endtask
 
@@ -118,6 +118,7 @@ task check();
         tmp_ref = read_data_ref[i];
         if ( tmp_dut != tmp_ref )
           $error( "the result does not match the standard" );
+        ##1;
       end
   end
 endtask
