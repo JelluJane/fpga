@@ -1,8 +1,10 @@
 `timescale 1 ps / 1 ps
 module sort_tb;
 
-localparam          TEST_LEN = 1024;
+localparam          MAX_PKT_LEN = 1024;
 localparam          DWIDTH = 8;
+
+int                 test_len;
 
 bit                 clk;
 bit                 srst;
@@ -36,7 +38,7 @@ endclocking
 
 sort #(
   .DWIDTH                ( DWIDTH            ),
-  .MAX_PKT_LEN           ( TEST_LEN          )
+  .MAX_PKT_LEN           ( MAX_PKT_LEN       )
 ) dut (
   .clk_i                 ( clk               ),
   .srst_i                ( srst              ),
@@ -54,7 +56,9 @@ sort #(
 
 task generate_data();
   logic [DWIDTH-1:0] tmp;
-  for ( int i = 0; i < TEST_LEN; i++ ) 
+  test_data = {};
+  read_data_ref = {};
+  for ( int i = 0; i < test_len; i++ ) 
     begin
       tmp = $urandom();  
       test_data.push_back( tmp );
@@ -75,15 +79,19 @@ task send();
           begin
             snk_valid = 1'b1;
             i++;
+            ##1;
             snk_startofpacket = 1'b0;
-            if ( i == TEST_LEN - 1 )
+            if ( i == test_len - 1 )
               snk_endofpacket = 1'b1;
           end
         else
-          snk_valid = 1'b0;
-        ##1;
+          begin
+            snk_valid = 1'b0;
+            ##1;
+          end
       end
-    while ( i < TEST_LEN );
+    while ( i < test_len );
+    ##1;
     snk_endofpacket = 1'b0;
   end
 endtask
@@ -91,7 +99,7 @@ endtask
 task read();
   begin
     wait ( src_startofpacket );
-    repeat ( TEST_LEN )
+    repeat ( test_len )
       begin
         read_data_dut.push_back( src_data );
         ##1;
@@ -103,9 +111,9 @@ task check();
   begin
 //    logic [DWIDTH-1:0] tmp_dut;
 //    logic [DWIDTH-1:0] tmp_ref;
-  for ( int i = 0; i < TEST_LEN; i++ )
+  for ( int i = 0; i < test_len; i++ )
     begin
-      if ( read_data_dut[i] != read_data_ref[i] )
+      if ( read_data_dut[i] !== read_data_ref[i] )
         $error( "the result does not match the standard" );
     end
   end
@@ -113,12 +121,28 @@ endtask
 
 initial
   begin
+    test_len = 111;
     generate_data();
     ##1;
     srst = 1'b1;
     ##1;
     srst = 1'b0;
     ##1;
+    send();
+    read();
+    check();
+    repeat ( 3 )
+      begin
+        ##1;
+        generate_data();
+        test_len = $urandom_range( 100,1000 );
+        send();
+        read();
+        check();
+      end
+    ##1;
+    test_len = 1024;
+    generate_data();
     send();
     read();
     check();

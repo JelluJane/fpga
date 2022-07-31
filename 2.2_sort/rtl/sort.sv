@@ -22,39 +22,25 @@ output logic        src_valid_o
 
 localparam                      ADDR_W = $clog2(MAX_PKT_LEN);
 
-logic                           in_rec;
 logic                           check;
-logic [ADDR_W-1:0]              sorting_count;
-
-
+logic [ADDR_W-1:0]              sort_cnt;
+logic [ADDR_W-1:0]              w_cnt;
+logic [ADDR_W-1:0]              r_cnt;
 
 //память 
 
 logic                           wren_a;
 logic                           wren_b;
-logic [ADDR_W-1:0] w_addr;
-logic [ADDR_W-1:0] r_addr;
-logic [ADDR_W-1:0] addr_a;
-logic [ADDR_W-1:0] addr_b;
+logic [ADDR_W-1:0]              addr_a;
+logic [ADDR_W-1:0]              addr_b;
 logic [DWIDTH-1:0]              data_a;
 logic [DWIDTH-1:0]              data_b;
 logic [DWIDTH-1:0]              q_a;
 logic [DWIDTH-1:0]              q_b;
 
-assign write_data = in_rec  && snk_valid_i;
-
-assign wren_a = snk_ready_o ? write_data : ( q_b < q_a );
-assign wren_b = snk_ready_o ? 1'b0       : ( q_b < q_a );
-assign data_a = snk_ready_o ? snk_data_i : q_b;
-assign data_b = q_a;
-assign addr_a = snk_ready_o ? w_addr     : sorting_count;
-assign addr_b = addr_a + 1'b1;
+//всякие нужности
 
 assign src_data_o = q_a;
-
-//не будет ли проблем от того, что я повсеместно использую как сигнал занятости модуля для внутренних исходящий сигнал лоджик snk_ready_o?
-//жопой чую, что такое количество комбинационной логики мне аукнется петлями.
-//write and read data
 
 RAM2p memory (
 .address_a       ( addr_a ),
@@ -68,109 +54,154 @@ RAM2p memory (
 .q_b             ( q_b    )
 );
 
+//FSM
+
+enum logic [1:0] {IDLE_S,
+                  WRITE_S,
+                  SORT_S,
+                  READ_S} 
+                  state, next_state;
+                  
 always_ff @( posedge clk_i )
   begin
-    if ( srst_i )
-      in_rec <= 1'b0;
+    if (srst_i)
+      state <= IDLE_S;
     else
-      if ( snk_endofpacket_i && snk_valid_i )
-        in_rec <= 1'b0;
-      else
-        if ( snk_startofpacket_i && snk_valid_i )
-          in_rec <= 1'b1;
+      state <= next_state;
   end
+
+always_comb
+  begin
+    case ( state )
+    IDLE_S:
+      if ( snk_valid_i && snk_startofpacket_i )
+        next_state = WRITE_S;
+    WRITE_S:
+      if ( snk_valid_i && snk_endofpacket_i )
+        next_state = SORT_S;
+    SORT_S:
+      if ( w_cnt == (ADDR_W)'(1) )
+        next_state = READ_S;
+      else if ( ( sort_cnt === w_cnt ) && check )
+        next_state = READ_S;
+    READ_S:
+      if ( r_cnt == w_cnt )
+        next_state = IDLE_S;
+    endcase
+  end
+
+always_comb
+  begin
+    case ( state )
+    IDLE_S:
+      begin
+        snk_ready_o = 1'b1;
+        src_valid_o = 1'b0;
+        wren_a = snk_valid_i;
+        addr_a = '0;
+        data_a = snk_data_i;
+      end
+    WRITE_S:
+      begin
+        snk_ready_o = 1'b0;
+        wren_a = snk_valid_i;
+        addr_a = w_cnt;
+        data_a = snk_data_i;
+      end
+    SORT_S:
+      begin
+        data_a = q_b;
+        data_b = q_a;
+        wren_a = q_b < q_a;
+        wren_b = q_b < q_a;
+        addr_a = sort_cnt;
+        addr_b = sort_cnt + (ADDR_W)'(1);
+      end
+    READ_S:
+      begin
+        addr_a = r_cnt;
+        src_valid_o = 1'b1;
+      end
+    endcase
+  end
+
+// адресс для записи и он же счётчик полученных слов
 
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
-      snk_ready_o <= 1'b1;
-    else
-      if ( snk_endofpacket_i && snk_valid_i )
-        snk_ready_o <= 1'b0;
-      else if ( src_endofpacket_o )
-        snk_ready_o <= 1'b1;
+      w_cnt <= '0;
+    else if ( state == IDLE_S )
+      w_cnt <= '0;
+    else if ( ( state == WRITE_S ) && snk_valid_i )
+      w_cnt <= w_cnt + (ADDR_W)'(1);
   end
+
+//выбор адресса для сортировки
 
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
-      w_addr <= '0;
+      sort_cnt <= '0;
+    else if ( ( state == SORT_S ) && ( sort_cnt < (w_cnt - (ADDR_W)'(1)) ) )
+      sort_cnt <= sort_cnt + (ADDR_W)'(1);
     else
-      if ( write_data )
-        w_addr <= w_addr + 1'b1;
-      else if ( ~in_rec )
-        w_addr <= '0;
+      sort_cnt <= '0;
   end
   
-//////////////////////////////////////////////////////////////////////////////////
+// и адресс для чтения
 
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
-      sorting_count <= '0;
+      r_cnt <= '0;
+    else if ( state == READ_S )
+      r_cnt <= r_cnt + src_ready_i;
     else
-      if ( src_valid_o )
-        if ( ~snk_ready_o && ( sorting_count < MAX_PKT_LEN - 1 ) && src_ready_i )
-          sorting_count <= sorting_count + 1'b1;
-        else
-          if ( ~snk_ready_o && ( sorting_count < MAX_PKT_LEN - 1 ) && ~src_ready_i )
-            sorting_count <= sorting_count;
-          else
-            sorting_count <= '0;  
-      else
-        if ( ~snk_ready_o && ( sorting_count < MAX_PKT_LEN - 2 ) )
-          sorting_count <= sorting_count + 1'b1;
-        else
-          sorting_count <= '0;  
+      r_cnt <= '0;
   end
 
+//флаг отсортированного массива
+  
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       check <= 1'b1;
     else
-      if ( src_valid_o )
+      if ( state != SORT_S )
         check <= 1'b0;
       else
-        if ( sorting_count == '0 )
+        if ( sort_cnt == '0 )
           check <= 1'b1;
         else
           if ( q_a > q_b )
             check <= 1'b0;
   end
 
-always_ff @( posedge clk_i )
-  begin
-    if ( srst_i )
-      src_valid_o <= 1'b0;
-    else
-      if ( ( sorting_count == MAX_PKT_LEN - 2) && check )
-        src_valid_o <= 1'b1;
-      else if ( sorting_count == MAX_PKT_LEN - 1 )
-        src_valid_o <= 1'b0;
-  end
- 
+//начало транзакции на выходе
+
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       src_startofpacket_o <= 1'b0;
     else
-      if ( ( sorting_count == MAX_PKT_LEN - 2) && check )
-        src_startofpacket_o <= 1'b1;
-      else
+      if ( src_startofpacket_o )
         src_startofpacket_o <= 1'b0;
+      else if ( ( state == READ_S ) && ( r_cnt == '0 ) )
+        src_startofpacket_o <= 1'b1;
   end
+
+//завершение транзакции на выходе
 
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       src_endofpacket_o <= 1'b0;
     else
-      if ( ( sorting_count == MAX_PKT_LEN - 2) && src_valid_o )
-        src_endofpacket_o <= 1'b1;
-      else
+      if ( src_endofpacket_o )
         src_endofpacket_o <= 1'b0;
-  
+      else if ( ( state == READ_S ) && ( r_cnt == w_cnt ) )
+        src_endofpacket_o <= 1'b1;
   end
 
 endmodule 
