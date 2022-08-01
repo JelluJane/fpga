@@ -77,7 +77,9 @@ always_comb
     next_state = state;
     case ( state )
     IDLE_S:
-      if ( snk_valid_i && snk_startofpacket_i )
+      if ( snk_valid_i && snk_endofpacket_i && snk_startofpacket_i )
+        next_state = SET_ADDR_S;
+      else if ( snk_valid_i && snk_startofpacket_i )
         next_state = WRITE_S;
     WRITE_S:
       if ( snk_valid_i && snk_endofpacket_i )
@@ -85,15 +87,15 @@ always_comb
     SORT_S:
       next_state = SET_ADDR_S;
     SET_ADDR_S:
-      if ( sorted )
+      if ( w_cnt == (ADDR_W)'(1) )
+        next_state = READ_S;
+      else if ( sorted )
         next_state = READ_S;
       else
         next_state = SORT_S;
     READ_S:
       if ( r_cnt == w_cnt )
         next_state = IDLE_S;
-      else
-        next_state = SET_ADDR_S;
     endcase
   end
 
@@ -172,9 +174,9 @@ always_ff @( posedge clk_i )
     if ( srst_i )
       r_cnt <= '0;
     else if ( ( state == SET_ADDR_S ) && sorted )
-      r_cnt <= r_cnt + (ADDR_W)'(1); //вот тут должен был бы быть прибавлен src_ready_i, но при отсутствии внешнего водуля он неопределён.
+      r_cnt <= r_cnt + src_ready_i;
     else if ( state == READ_S )
-      r_cnt <= r_cnt;
+      r_cnt <= r_cnt + src_ready_i; //вот тут должен был бы быть прибавлен src_ready_i, но при отсутствии внешнего водуля он неопределён.
     else
       r_cnt <= '0;
   end
@@ -215,7 +217,7 @@ always_ff @( posedge clk_i )
     else
       if ( src_startofpacket_o )
         src_startofpacket_o <= 1'b0;
-      else if ( ( state == READ_S ) && ( r_cnt == '0 ) )
+      else if ( ( state == SET_ADDR_S ) && sorted )
         src_startofpacket_o <= 1'b1;
   end
 
@@ -228,7 +230,7 @@ always_ff @( posedge clk_i )
     else
       if ( src_endofpacket_o )
         src_endofpacket_o <= 1'b0;
-      else if ( r_cnt == ( w_cnt - (ADDR_W)'(1) ) && ( state == SET_ADDR_S) ) 
+      else if ( r_cnt == ( w_cnt - (ADDR_W)'(1) ) && ( state == READ_S) ) 
         src_endofpacket_o <= 1'b1;
   end
 

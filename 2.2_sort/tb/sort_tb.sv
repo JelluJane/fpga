@@ -67,9 +67,9 @@ task generate_data();
   read_data_ref.sort;
 endtask
 
-task send();
+task automatic send();
   begin
-    int i;
+    int i = 0;
     wait ( snk_ready );
     snk_startofpacket = 1'b1;
     do
@@ -96,15 +96,22 @@ task send();
   end
 endtask
   
-task read();
+task automatic read();
   begin
-    if ( src_startofpacket && src_valid );
-      for ( int i = 0; i < test_len; i ++)
-        begin
-          read_data_dut.push_back( src_data );
-          ##1;
-          wait ( src_valid );
-        end
+    int i = 0;
+    read_data_dut = {};
+    wait ( src_startofpacket && src_valid );
+    do
+      begin
+        if ( src_valid )
+          begin
+            read_data_dut.push_back( src_data );
+            i++;
+          end
+        ##1;
+      end
+    while ( i < test_len );
+    ##1;
   end
 endtask
 
@@ -114,8 +121,8 @@ task check();
     logic [DWIDTH-1:0] tmp_ref;
     for ( int i = 0; i < test_len; i++ )
       begin
-        tmp_dut = read_data_dut[i];
-        tmp_ref = read_data_ref[i];
+        tmp_dut = read_data_dut.pop_front();
+        tmp_ref = read_data_ref.pop_front();
         if ( tmp_dut != tmp_ref )
           $error( "the result does not match the standard" );
         ##1;
@@ -126,6 +133,7 @@ endtask
 initial
   begin
     test_len = 10;
+    src_ready = 1'b1;
     generate_data();
     ##1;
     srst = 1'b1;
