@@ -25,8 +25,8 @@ logic               src_valid;
 
 
 logic [DWIDTH-1:0]  test_data     [$];
-logic [DWIDTH-1:0]  read_data_dut [$];
-logic [DWIDTH-1:0]  read_data_ref [$];
+mailbox             read_data_dut;
+logic [DWIDTH-1:0]  read_data_ref[$];
 
 initial
   forever
@@ -65,6 +65,8 @@ task generate_data();
       read_data_ref.push_back( tmp );
     end
   read_data_ref.sort;
+  for ( int i = 0; i<test_len;i++)
+    $display( "DUT %x", read_data_ref[i] );
 endtask
 
 task automatic send();
@@ -96,21 +98,14 @@ task automatic send();
   end
 endtask
   
-task automatic read();
+task read();
   begin
-    int i = 0;
-    read_data_dut = {};
     wait ( src_startofpacket && src_valid );
-    do
+    for ( int i = 0 ; i < test_len+1 ; i++ )
       begin
-        if ( src_valid )
-          begin
-            read_data_dut.push_back( src_data );
-            i++;
-          end
+        read_data_dut.put( src_data );
         ##1;
       end
-    while ( i < test_len );
     ##1;
   end
 endtask
@@ -119,19 +114,19 @@ task check();
   begin
     logic [DWIDTH-1:0] tmp_dut;
     logic [DWIDTH-1:0] tmp_ref;
-    for ( int i = 0; i < test_len; i++ )
+    for ( int i = 0; i < test_len +1; i++ )
       begin
-        tmp_dut = read_data_dut.pop_front();
-        tmp_ref = read_data_ref.pop_front();
+        read_data_dut.get(tmp_dut);
+        tmp_ref = read_data_ref.pop_front;
         if ( tmp_dut != tmp_ref )
           $error( "the result does not match the standard" );
-        ##1;
       end
   end
 endtask
 
 initial
   begin
+    read_data_dut = new();
     test_len = 10;
     src_ready = 1'b1;
     generate_data();
@@ -141,8 +136,10 @@ initial
     srst = 1'b0;
     ##1;
     send();
+    fork
     read();
     check();
+    join
     // repeat ( 3 )
       // begin
         // ##1;
@@ -152,7 +149,7 @@ initial
         // read();
         // check();
       // end
-    ##1;
+    ##10;
     test_len = 1023;
     generate_data();
     send();
