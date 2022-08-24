@@ -65,8 +65,6 @@ task generate_data();
       read_data_ref.push_back( tmp );
     end
   read_data_ref.sort;
-  for ( int i = 0; i<test_len;i++)
-    $display( "DUT %x", read_data_ref[i] );
 endtask
 
 task automatic send();
@@ -101,11 +99,13 @@ endtask
 task read();
   begin
     wait ( src_startofpacket && src_valid );
-    for ( int i = 0 ; i < test_len+1 ; i++ )
+    do
       begin
         read_data_dut.put( src_data );
         ##1;
       end
+    while ( ~src_endofpacket );
+    read_data_dut.put( src_data );
     ##1;
   end
 endtask
@@ -114,10 +114,16 @@ task check();
   begin
     logic [DWIDTH-1:0] tmp_dut;
     logic [DWIDTH-1:0] tmp_ref;
-    for ( int i = 0; i < test_len +1; i++ )
+    $display( "size is %d", read_data_ref.size() );
+    $display( "size is %d", test_data.size() );
+    for ( int i = 0; i < test_len+1; i++ )
       begin
+        @ ( posedge clk );
+        $display( "i is %d", i );                                          
         read_data_dut.get(tmp_dut);
-        tmp_ref = read_data_ref.pop_front;
+        tmp_ref = read_data_ref[i];
+        $display( "DUT %x", tmp_dut );                                          
+        $display( "REF %x", tmp_ref );    
         if ( tmp_dut != tmp_ref )
           $error( "the result does not match the standard" );
       end
@@ -137,8 +143,8 @@ initial
     ##1;
     send();
     fork
-    read();
-    check();
+      read();
+      check();
     join
     // repeat ( 3 )
       // begin
