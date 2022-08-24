@@ -12,7 +12,7 @@ logic [DWIDTH-1:0]  data;
 logic               wrreq;
 
 logic               rdreq;
-logic               q;
+logic [DWIDTH-1:0]  q;
 
 logic               almost_empty;
 logic               empty;
