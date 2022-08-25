@@ -55,11 +55,11 @@ lifo #(
 );
 
 task wr_only();
-  ##1;
   wrreq = 1'b1;
   rdreq = 1'b0;
   data = $urandom();
   read_data_ref.push_front( data );
+  ##1;
 endtask
 
 task rd_only();
@@ -82,10 +82,12 @@ task check_data ();
       repeat ( test_len )
         begin
           tmp_dut = read_data_dut.pop_back();
-          tmp_ref = read_data_ref.pop_back();          
+          tmp_ref = read_data_ref.pop_back(); 
+          $display("dut is %b ref is %b", tmp_dut, tmp_ref);
           if ( tmp_dut != tmp_ref )
-            $display("dut is %b ref is %b", tmp_dut, tmp_ref);
-            $error( "the data does not match" );
+            begin
+              $error( "the data does not match" );
+            end
         end
 endtask
 
@@ -102,9 +104,7 @@ endtask
 
 task testcase1();
   $display( "Testcase1: read from empty." );
-  rdreq = 1'b1;
-  ##3;
-  rdreq = 1'b0;
+  repeat ( 3 ) rd_only();
   ##1;
   if ( usedw !== '0 )
     $error( "read from empty lifo" );
@@ -113,14 +113,21 @@ endtask
 task testcase2();
   read_data_dut = {};
   read_data_ref = {};
-  test_len = ( 2**AWIDTH ) + 1;
+  test_len = ( 2**AWIDTH );
   $display( "Testcase2: write until overflow, then read until empty.");
-  repeat( ( 2**AWIDTH ) + 2 ) wr_only();
-  if ( usedw > 2**AWIDTH )
+  repeat( 2**AWIDTH ) wr_only();
+  ##1;
+  //лишний такт обеспечит попытку записи в полный модуль, но не сохранит эту попытку в очередь с результатами.
+  if ( usedw > ( 2**AWIDTH - 1 ) )
     $error( "overflow lifo" );
-  repeat( ( 2**AWIDTH ) + 1 ) rd_only();
+  repeat( 2**AWIDTH ) rd_only();
   idle();
   check_data ();
+endtask
+
+task testcase3();
+  
+
 endtask
 
 initial
@@ -140,6 +147,11 @@ initial
     ##1;
     //запись с переполнением, чтение до конца.
     testcase2();
+    srst = 1'b1;
+    ##1;
+    srst = 1'b0;
+    ##1;
+    testcase3();
     $stop;
   end
 endmodule
