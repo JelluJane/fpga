@@ -2,7 +2,7 @@ module lifo_tb;
 
 localparam int      DWIDTH       = 16;
 localparam int      AWIDTH       = 8;
-localparam int      ALMOST_FULL  = 14;
+localparam int      ALMOST_FULL  = 2;
 localparam int      ALMOST_EMPTY = 2;
 
 bit                 clk;
@@ -126,12 +126,10 @@ initial
     srst = 1'b1;
     ##1;
     srst = 1'b0;
-    ##1;
-    wrreq = 1'b0;
-    rdreq = 1'b0;
-    ##1;
+    idle();
     //запись до конца, чтение до конца.
     testcase0();
+    //чтение из пустой
     testcase1();
     srst = 1'b1;
     ##1;
