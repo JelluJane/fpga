@@ -54,38 +54,27 @@ lifo #(
   .usedw_o         ( usedw        )
 );
 
-task automatic generate_data();
-  logic [DWIDTH-1:0] tmp;
-  test_data = {};
-  for ( int i = 0; i < 1000; i++ ) 
-    begin
-      tmp = $urandom();  
-      test_data.push_back( tmp );
-    end
-endtask
-  
-task automatic send_data_wo();
-  logic [DWIDTH-1:0] tmp;
-  read_data_ref = {};
-  repeat ( test_len )
-    begin
-      tmp = test_data.pop_back();
-      read_data_ref.push_front( tmp );
-      data = tmp;
-      wrreq = 1'b1;
-      ##1;
-    end  
-  wrreq = 1'b0;
+task wr_only();
+  ##1;
+  wrreq <= 1'b1;
+  rdreq <= 1'b0;
+  data <= $urandom();
+  read_data_ref.push_front( data );
 endtask
 
-task get_data_ro ();
-  rdreq = 1'b1;
-  repeat ( test_len )
-    begin
-      ##1;
-      read_data_dut.push_back( q );
-    end
+task rd_only();
+  rdreq <= 1'b1;
+  wrreq <= 1'b0;
+  ##1;
+  read_data_dut.push_back( q );
 endtask
+
+task idle();
+  ##1;
+  rdreq <= 1'b0;
+  wrreq <= 1'b0;
+  ##1;
+endtask 
 
 task check_data ();
     logic [DWIDTH-1:0] tmp_dut;
@@ -97,24 +86,59 @@ task check_data ();
           if ( tmp_dut != tmp_ref )
             $error( "the data does not match" );
         end
-endtask      
-      
+endtask
+
+task testcase0();
+  read_data_dut = {};
+  read_data_ref = {};
+  $display( "Testcase0: write until full, then read until empty.");
+  repeat( ( 2**AWIDTH ) + 1 ) wr_only();
+  repeat( ( 2**AWIDTH ) + 1 ) rd_only();
+  idle();
+  check_data ();
+endtask
+
+task testcase1();
+  $display( "Testcase1: read from empty." );
+  rdreq = 1'b1;
+  ##3;
+  rdreq = 1'b0;
+  ##1;
+  if ( usedw !== '0 )
+    $error( "read from empty lifo" );
+endtask
+
+task testcase2();
+  read_data_dut = {};
+  read_data_ref = {};
+  $display( "Testcase2: write until overflow, then read until empty.");
+  repeat( ( 2**AWIDTH ) + 2 ) wr_only();
+  if ( usedw > 2**AWIDTH )
+    $error( "overflow lifo" );
+  repeat( ( 2**AWIDTH ) + 1 ) rd_only();
+  idle();
+  check_data ();
+endtask
+
 initial
   begin
-    //read_data_dut = new();
-    //read_data_ref = new();
-    generate_data();
     ##1;
     srst = 1'b1;
     ##1;
     srst = 1'b0;
     ##1;
-    test_len = 16;
-    // whrite only
-    send_data_wo();
-    // read only
-    get_data_ro();
-    check_data();
+    wrreq = 1'b0;
+    rdreq = 1'b0;
+    ##1;
+    //запись до конца, чтение до конца.
+    testcase0();
+    testcase1();
+    srst = 1'b1;
+    ##1;
+    srst = 1'b0;
+    ##1;
+    //запись с переполнением, чтение до конца.
+    testcase2();
     $stop;
   end
 endmodule
