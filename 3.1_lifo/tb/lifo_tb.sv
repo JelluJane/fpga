@@ -82,9 +82,9 @@ task check_data ();
       repeat ( test_len )
         begin
           tmp_dut = read_data_dut.pop_back();
-          tmp_ref = read_data_ref.pop_back();
-          $display("dut is %d ref is %d", tmp_dut, tmp_ref);
+          tmp_ref = read_data_ref.pop_back();          
           if ( tmp_dut != tmp_ref )
+            $display("dut is %b ref is %b", tmp_dut, tmp_ref);
             $error( "the data does not match" );
         end
 endtask
@@ -92,10 +92,10 @@ endtask
 task testcase0();
   read_data_dut = {};
   read_data_ref = {};
-  test_len = ( 2**AWIDTH ) + 1;
+  test_len = ( 2**AWIDTH ) + 1 ;
   $display( "Testcase0: write until full, then read until empty.");
-  repeat( ( 2**AWIDTH ) + 1 ) wr_only();
-  repeat( ( 2**AWIDTH ) + 1 ) rd_only();
+  repeat( ( 2**AWIDTH ) + 1  ) wr_only();
+  repeat( ( 2**AWIDTH ) + 1  ) rd_only();
   idle();
   check_data ();
 endtask
