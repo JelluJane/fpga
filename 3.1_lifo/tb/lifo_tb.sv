@@ -62,6 +62,31 @@ task wr_only();
   ##1;
 endtask
 
+task write_with_read();
+  wrreq = 1'b1;
+  repeat ( test_len )
+    begin
+      data = $urandom();
+      read_data_ref.push_back( data );
+      ##1;
+    end
+  wrreq = 1'b0;
+endtask
+
+task read_with_write();
+  wait ( usedw > (AWIDTH+1)'(1) )
+  rdreq = 1'b1;
+  repeat ( test_len + 1 )
+    begin
+      ##1;
+      read_data_dut.push_back( data );
+    end
+  rdreq = 1'b0;
+  ##1;
+  read_data_dut.push_front ( data );
+  
+endtask
+
 task rd_only();
   rdreq = 1'b1;
   wrreq = 1'b0;
@@ -79,11 +104,11 @@ endtask
 task check_data ();
     logic [DWIDTH-1:0] tmp_dut;
     logic [DWIDTH-1:0] tmp_ref;
-      repeat ( test_len )
+      for ( int i = 0; i < test_len; i++)
         begin
           tmp_dut = read_data_dut.pop_back();
           tmp_ref = read_data_ref.pop_back(); 
-          $display("dut is %b ref is %b", tmp_dut, tmp_ref);
+          $display("%d dut is %b ref is %b", i, tmp_dut, tmp_ref);
           if ( tmp_dut != tmp_ref )
             begin
               $error( "the data does not match" );
@@ -122,12 +147,21 @@ task testcase2();
     $error( "overflow lifo" );
   repeat( 2**AWIDTH ) rd_only();
   idle();
-  check_data ();
+  //check_data ();
 endtask
 
 task testcase3();
-  
-
+  logic [DWIDTH-1:0] tmp;
+  read_data_dut = {};
+  read_data_ref = {};
+  test_len = ( 2**AWIDTH );
+  $display( "Testcase3: write and read %d iteration", test_len);
+  fork
+    write_with_read();
+    read_with_write();
+  join
+  idle();
+  check_data ();
 endtask
 
 initial
