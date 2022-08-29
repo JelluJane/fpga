@@ -178,7 +178,6 @@ task testcase3();
 endtask
 
 task testcase4();
-  //logic [1:0] for_case;
   logic [DWIDTH-1:0] tmp;
   read_data_dut = {};
   read_data_ref = {};
@@ -187,7 +186,6 @@ task testcase4();
   repeat (100) wr_only();
   repeat (100)
     begin
-      //for_case = $urandom_range(3);
       case ( $urandom_range(3) )
         0:
           idle();
@@ -234,11 +232,13 @@ initial
     ##1;
     srst = 1'b0;
     ##1;
+    //параллельное чтение с записью
     testcase3();
     srst = 1'b1;
     ##1;
     srst = 1'b0;
     ##1;
+    //заполнение на половину, случайное чтение/запись.
     testcase4();
     $stop;
   end
