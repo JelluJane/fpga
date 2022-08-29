@@ -22,8 +22,7 @@ logic [AWIDTH:0]    usedw;
 
 int                 test_len;
 
-logic [DWIDTH-1:0]  test_data[$];
-logic [DWIDTH-1:0]  temp_data[$];
+logic [DWIDTH-1:0]  read_data_tmp[$];
 logic [DWIDTH-1:0]  read_data_dut[$];
 logic [DWIDTH-1:0]  read_data_ref[$];  
 
@@ -73,6 +72,24 @@ task write_with_read();
   wrreq = 1'b0;
 endtask
 
+task wr_case4();
+  logic [DWIDTH-1:0] tmp1;
+  wrreq = 1'b1;
+  data = $urandom();
+  //забираем предыдущее значение из эталонной очереди, пишем туда новое, сохраням забранное в очередь с временными значениями.
+  tmp1 = read_data_ref.pop_back();
+  read_data_ref.push_front( data );
+  read_data_tmp.push_front( tmp1 );
+  ##1;
+endtask
+
+task rd_only();
+  rdreq = 1'b1;
+  wrreq = 1'b0;
+  ##1;
+  read_data_dut.push_back( q );
+endtask
+
 task read_with_write();
   wait ( usedw > (AWIDTH+1)'(1) )
   rdreq = 1'b1;
@@ -84,18 +101,15 @@ task read_with_write();
   rdreq = 1'b0;
   ##1;
   read_data_dut.push_front ( data );
-  
 endtask
 
-task rd_only();
+task rd_case4();
   rdreq = 1'b1;
-  wrreq = 1'b0;
   ##1;
   read_data_dut.push_back( q );
 endtask
 
 task idle();
-  ##1;
   rdreq = 1'b0;
   wrreq = 1'b0;
   ##1;
@@ -138,7 +152,7 @@ endtask
 task testcase2();
   read_data_dut = {};
   read_data_ref = {};
-  test_len = ( 2**AWIDTH );
+    test_len = ( 2**AWIDTH );
   $display( "Testcase2: write until overflow, then read until empty.");
   repeat( 2**AWIDTH ) wr_only();
   ##1;
@@ -151,7 +165,6 @@ task testcase2();
 endtask
 
 task testcase3();
-  logic [DWIDTH-1:0] tmp;
   read_data_dut = {};
   read_data_ref = {};
   test_len = ( 2**AWIDTH );
@@ -162,6 +175,42 @@ task testcase3();
   join
   idle();
   check_data ();
+endtask
+
+task testcase4();
+  //logic [1:0] for_case;
+  logic [DWIDTH-1:0] tmp;
+  read_data_dut = {};
+  read_data_ref = {};
+  read_data_tmp = {};
+  $display( "Testcase4: random write and read");
+  repeat (100) wr_only();
+  repeat (100)
+    begin
+      //for_case = $urandom_range(3);
+      case ( $urandom_range(3) )
+        0:
+          idle();
+        1:
+          rd_only ();
+        2:
+          wr_only ();
+        3:
+          fork
+            wr_case4();
+            rd_case4();
+          join_any
+      endcase  
+    end
+  repeat ( read_data_tmp.size() )
+    begin
+      tmp = read_data_tmp.pop_back;
+      read_data_ref.push_back( tmp );
+    end
+  do
+    rd_only();
+  while ( usedw != '0 );
+  check_data();
 endtask
 
 initial
@@ -186,6 +235,11 @@ initial
     srst = 1'b0;
     ##1;
     testcase3();
+    srst = 1'b1;
+    ##1;
+    srst = 1'b0;
+    ##1;
+    testcase4();
     $stop;
   end
 endmodule
